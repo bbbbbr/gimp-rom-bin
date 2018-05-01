@@ -1,0 +1,12 @@
+Quick instructions:
+===================
+
+In order to build this plugin, you need to have the WebP development files
+installed. You can find them here:
+
+    http://code.google.com/speed/webp/download.html
+
+After that, you can compile it on Unix / Linux using:
+
+    export LIBS=-lwebp
+    gimptool-2.0 --install file-webp.c

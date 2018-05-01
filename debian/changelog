@@ -1,0 +1,11 @@
+gimp-webp (0.1.1-1) precise; urgency=low
+
+  * Updated to support Gimp 2.8
+
+ -- Nathan Osman <admin@quickmediasolutions.com>  Sat, 05 May 2012 19:50:02 -0700
+
+gimp-webp (0.1-1) natty; urgency=low
+
+  * Initial release
+
+ -- Nathan Osman <admin@quickmediasolutions.com>  Thu, 26 May 2011 10:57:46 -0700
