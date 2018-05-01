@@ -19,6 +19,8 @@
 #include "write-snes-bin.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <libgimp/gimp.h>
 
 int write_webp(const gchar * filename, gint drawable_id, float quality)
@@ -58,6 +60,7 @@ int write_webp(const gchar * filename, gint drawable_id, float quality)
                             drawable->width,
                             drawable->height);
 
+/*
     // We have the image data, now encode it.
     output_size = WebPEncodeRGB((const uint8_t *)image_data,
                                 drawable->width,
@@ -65,7 +68,7 @@ int write_webp(const gchar * filename, gint drawable_id, float quality)
                                 drawable->width * 3,
                                 quality,
                                 &raw_data);
-
+*/
     // Free the image data
     free(image_data);
 

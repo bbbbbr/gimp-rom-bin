@@ -53,8 +53,10 @@ int read_webp(const gchar * filename)
     // Close the file
     fclose(file);
 
+/*
     // Perform the load procedure and free the raw data.
     image_data = WebPDecodeRGB(data, filesize, &width, &height);
+*/
     free(data);
 
     // Check to make sure that the load was successful
