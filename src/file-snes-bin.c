@@ -17,6 +17,7 @@
 =======================================================================*/
 
 #include <string.h>
+#include <stdint.h>
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
@@ -93,7 +94,7 @@ void query()
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
                            "SNES bin image",
-                           "RGB*",
+                           "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
                            0,
@@ -138,7 +139,7 @@ void run(const gchar * name,
         }
 
         // Now read the image
-        new_image_id = read_webp(param[1].data.d_string);
+// TODO        new_image_id = read_snesbin(param[1].data.d_string);
 
         // Check for an error
         if(new_image_id == -1)
@@ -175,7 +176,7 @@ void run(const gchar * name,
         export_ret = gimp_export_image(&image_id,
                                        &drawable_id,
                                        "BIN",
-                                       GIMP_EXPORT_CAN_HANDLE_RGB);
+                                       GIMP_EXPORT_CAN_HANDLE_INDEXED);
 
         switch(export_ret)
         {
@@ -189,8 +190,8 @@ void run(const gchar * name,
                     return;
                 }
 
-                status = write_webp(param[3].data.d_string,
-                                    drawable_id, quality);
+//                status = write_snesbin(param[3].data.d_string,
+//                                    drawable_id, quality);
                 gimp_image_delete(image_id);
 
                 break;
