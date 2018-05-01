@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int write_webp(const gchar * filename, gint drawable_id, float quality)
+int write_snesbin(const gchar * filename, gint drawable_id, float quality)
 {
     GimpDrawable * drawable;
     gint bpp;
@@ -61,6 +61,7 @@ int write_webp(const gchar * filename, gint drawable_id, float quality)
                             drawable->height);
 
 /*
+    // TODO: Encode image data to bin file + output format option/dialog
     // We have the image data, now encode it.
     output_size = WebPEncodeRGB((const uint8_t *)image_data,
                                 drawable->width,

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <libgimp/gimp.h>
 
-int read_webp(const gchar * filename)
+int read_snesbin(const gchar * filename)
 {
     FILE * file;
     long int filesize;
@@ -54,6 +54,7 @@ int read_webp(const gchar * filename)
     fclose(file);
 
 /*
+    TODO: Decode File Data
     // Perform the load procedure and free the raw data.
     image_data = WebPDecodeRGB(data, filesize, &width, &height);
 */

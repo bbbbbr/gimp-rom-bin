@@ -18,4 +18,4 @@
 
 #include <glib.h>
 
-int read_webp(const gchar *);
+int read_snesbin(const gchar *);
