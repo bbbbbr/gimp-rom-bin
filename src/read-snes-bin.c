@@ -16,12 +16,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include "read-webp.h"
+#include "read-snes-bin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <libgimp/gimp.h>
-#include <webp/decode.h>
 
 int read_webp(const gchar * filename)
 {

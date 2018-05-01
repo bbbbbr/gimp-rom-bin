@@ -20,8 +20,8 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
-#include "read-webp.h"
-#include "write-webp.h"
+#include "read-snes-bin.h"
+#include "write-snes-bin.h"
 #include "export-dialog.h"
 
 const char LOAD_PROCEDURE[] = "file-webp-load";
