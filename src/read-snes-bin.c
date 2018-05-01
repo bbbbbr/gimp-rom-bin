@@ -17,17 +17,23 @@
 =======================================================================*/
 
 #include "read-snes-bin.h"
+#include "lib_snesbin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <libgimp/gimp.h>
 
 int read_snesbin(const gchar * filename)
 {
+    int status = 1;
+
     FILE * file;
     long int filesize;
-    void * data,
-         * image_data;
+    void * filedata;
+
+    guchar * image_data,
+           * color_map_data;
     int width, height;
     gint32 new_image_id,
            new_layer_id;
@@ -47,36 +53,54 @@ int read_snesbin(const gchar * filename)
 
     // Now prepare a buffer of that size
     // and read the data.
-    data = malloc(filesize);
-    fread(data, filesize, 1, file);
+    filedata = malloc(filesize);
+    fread(filedata, filesize, 1, file);
 
     // Close the file
     fclose(file);
 
-/*
-    TODO: Decode File Data
-    // Perform the load procedure and free the raw data.
-    image_data = WebPDecodeRGB(data, filesize, &width, &height);
-*/
-    free(data);
-
-    // Check to make sure that the load was successful
-    if(!image_data)
+    // Make sure the alloc succeeded
+    if(filedata == NULL)
         return -1;
 
-    // Now create the new RGBA image.
-    new_image_id = gimp_image_new(width, height, GIMP_RGB);
+
+    // Perform the load procedure and free the raw data.
+// TODO: load image
+//    status = snesbin_decode_to_indexed(filedata, filesize, &width, &height, &image_data, &color_map_data);
+
+    free(filedata);
+
+    // Check to make sure that the load was successful
+    if (status != 0)
+    {
+        if(image_data)
+            free(image_data);
+
+        if(color_map_data)
+            free(color_map_data);
+        return -1;
+    }
+
+
+
+    // Now create the new INDEXED image.
+    new_image_id = gimp_image_new(width, height, GIMP_INDEXED);
 
     // Create the new layer
     new_layer_id = gimp_layer_new(new_image_id,
                                   "Background",
                                   width, height,
-                                  GIMP_RGB_IMAGE,
+                                  GIMP_INDEXED_IMAGE,
                                   100,
                                   GIMP_NORMAL_MODE);
 
     // Get the drawable for the layer
     drawable = gimp_drawable_get(new_layer_id);
+
+
+    // Set up the indexed color map
+// TODO:set color map
+//    gimp_image_set_cmap (new_image_id, color_map_data, YYCHR_COLOR_MAP_SIZE);
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
@@ -96,7 +120,10 @@ int read_snesbin(const gchar * filename)
     gimp_drawable_detach(drawable);
 
     // Free the image data
-    free((void *)image_data);
+    free(image_data);
+
+    // Free the color map data
+    free(color_map_data);
 
     // Add the layer to the image
     gimp_image_add_layer(new_image_id, new_layer_id, 0);
