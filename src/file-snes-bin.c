@@ -24,9 +24,9 @@
 #include "write-snes-bin.h"
 #include "export-dialog.h"
 
-const char LOAD_PROCEDURE[] = "file-webp-load";
-const char SAVE_PROCEDURE[] = "file-webp-save";
-const char BINARY_NAME[]    = "file-webp";
+const char LOAD_PROCEDURE[] = "file-snes-bin-load";
+const char SAVE_PROCEDURE[] = "file-snes-bin-save";
+const char BINARY_NAME[]    = "file-snes-bin";
 
 // Predeclare our entrypoints
 void query();
@@ -72,12 +72,12 @@ void query()
 
     // Install the load procedure
     gimp_install_procedure(LOAD_PROCEDURE,
-                           "Loads images in the WebP file format",
-                           "Loads images in the WebP file format",
-                           "Nathan Osman",
-                           "Copyright Nathan Osman",
-                           "2012",
-                           "WebP image",
+                           "Loads images in the SNES bin file format",
+                           "Loads images in the SNES bin file format",
+                           "Others & Nathan Osman (webp plugin base)",
+                           "Copyright Others & Nathan Osman (webp plugin base)",
+                           "2018",
+                           "SNES bin image",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -87,12 +87,12 @@ void query()
 
     // Install the save procedure
     gimp_install_procedure(SAVE_PROCEDURE,
-                           "Saves files in the WebP image format",
-                           "Saves files in the WebP image format",
-                           "Nathan Osman",
-                           "Copyright Nathan Osman",
-                           "2012",
-                           "WebP image",
+                           "Saves files in the SNES bin image format",
+                           "Saves files in the SNES bin image format",
+                           "Others & Nathan Osman (webp plugin base)",
+                           "Copyright Others & Nathan Osman (webp plugin base)",
+                           "2018",
+                           "SNES bin image",
                            "RGB*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -101,12 +101,12 @@ void query()
                            NULL);
 
     // Register the load handlers
-    gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/webp");
-    gimp_register_load_handler(LOAD_PROCEDURE, "webp", "");
+    gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
 
     // Now register the save handlers
-    gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/webp");
-    gimp_register_save_handler(SAVE_PROCEDURE, "webp", "");
+    gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
+    gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
 }
 
 // The run function
@@ -174,7 +174,7 @@ void run(const gchar * name,
         gimp_ui_init(BINARY_NAME, FALSE);
         export_ret = gimp_export_image(&image_id,
                                        &drawable_id,
-                                       "WEBP",
+                                       "BIN",
                                        GIMP_EXPORT_CAN_HANDLE_RGB);
 
         switch(export_ret)
