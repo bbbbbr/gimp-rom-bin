@@ -1,6 +1,6 @@
 /*=======================================================================
-              WebP load / save plugin for the GIMP
-                 Copyright 2012 - Nathan Osman
+              SNES bin load / save plugin for the GIMP
+                 Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
