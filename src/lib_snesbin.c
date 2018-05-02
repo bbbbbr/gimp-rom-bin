@@ -33,6 +33,7 @@
 #define SNESBIN_DECODED_COLOR_MAP_BYTES_PER_PIXEL 3 // R,G,B
 #define SNESBIN_TILE_PIXEL_WIDTH                  8
 #define SNESBIN_TILE_PIXEL_HEIGHT                 8
+#define SNESBIN_IMAGE_PIXELS_PER_BYTE             8 // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo/hi byte)
 
 
 int snesbin_decode_image_data(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data);
@@ -71,48 +72,31 @@ int snesbin_decode_image_data(void * file_data, long int * file_size, long int *
     // * Pixel #    : 012345678  012345678
     // * Pixel l/h  : LLLLLLLLL  HHHHHHHHH
     // * So, Pixel 0 = ((byte0 >> 8) & 0x01) | ((byte1 >> 7) & 0x20)
-
-
-// for: 0 .. < height / 8_tile_px
-//   for: 0 .. width / bpp / 8_tile_px
+    // TODO : verify lo/hi byte order
 
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
     *file_offset = 0;
 
     for (int y=0; y < (height / SNESBIN_TILE_PIXEL_HEIGHT); y++) {
-//        printf("y=%d\n", y);
-
         // Decode left-to-right
-        // TODO: / SNESBIN_IMAGE_BITS_PER_PIXEL)
         for (int x=0; x < (width / SNESBIN_TILE_PIXEL_WIDTH); x++) {
-
-//            printf(" x=%d\n", x);
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < SNESBIN_TILE_PIXEL_HEIGHT; ty++) {
-
-//                printf("  ty=%d, %ld\n", ty,*file_offset);
-
-                // TODO : Any reason not to change void* to unsigned char* for ptr_file_data?
                 // Read two bytes and unpack the 8 horizontal pixels
                 pixdata[0] = *((unsigned char *)file_data + (*file_offset)++);
                 pixdata[1] = *((unsigned char *)file_data + (*file_offset)++);
-
-//                printf("  :%x, %x", pixdata[0], pixdata[1]);
 
                 // Set up the pointer to the pixel in the destination image buffer
                 // TODO: optimize
                 image_pixel = (image_data + (((y * SNESBIN_TILE_PIXEL_HEIGHT) + ty) * width)
                                           +   (x * SNESBIN_TILE_PIXEL_WIDTH));
 
-//                printf("   px=%d,py=%d\n", (x * SNESBIN_TILE_PIXEL_WIDTH), ((y * SNESBIN_TILE_PIXEL_HEIGHT) + ty));
                 // Unpack the 8 horizontal pixels
-                // for (int b=0;b < SNESBIN_IMAGE_BITS_PER_PIXEL; b++) {
-                // TODO - tidy up constants
-                for (int b=0;b < 8; b++) {
+                for (int b=0;b < SNESBIN_IMAGE_PIXELS_PER_BYTE; b++) {
 
-//                    printf("   pd=%d\n", ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02));
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
+                    // TODO: Is the bit order swapped here? should 0 be LSBit?
                     *image_pixel++ = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
 
                     // Upshift bits to prepare for the next pixel
@@ -144,17 +128,17 @@ int snesbin_decode_read_color_data(unsigned char * color_map_data)
     color_map_data[colorindex++] = 0;
     color_map_data[colorindex++] = 0;
 
-    color_map_data[colorindex++] = 80;
-    color_map_data[colorindex++] = 80;
-    color_map_data[colorindex++] = 80;
+    color_map_data[colorindex++] = 0x8c;
+    color_map_data[colorindex++] = 0x63;
+    color_map_data[colorindex++] = 0x21;
 
-    color_map_data[colorindex++] = 160;
-    color_map_data[colorindex++] = 160;
-    color_map_data[colorindex++] = 160;
+    color_map_data[colorindex++] = 0xAD;
+    color_map_data[colorindex++] = 0xB5;
+    color_map_data[colorindex++] = 0x31;
 
-    color_map_data[colorindex++] = 240;
-    color_map_data[colorindex++] = 240;
-    color_map_data[colorindex++] = 240;
+    color_map_data[colorindex++] = 0xC6;
+    color_map_data[colorindex++] = 0xE7;
+    color_map_data[colorindex++] = 0x9C;
 
     return 0;
 }
@@ -165,29 +149,26 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     long int file_offset = 0;
 
     // Set Width & Height
-    // Width is always 128
-    // Height is a function of bits per pixel and file size
-
-    // TODO: FIX ME!
-    //  (8 / SNESBIN_IMAGE_BITS_PER_PIXEL)
-//    *ptr_width = SNESBIN_IMAGE_WIDTH_DEFAULT;
-//    *ptr_height = file_size / SNESBIN_IMAGE_WIDTH_DEFAULT;
+    // Tiles are 8x8 pixels. Calculate size factoring in bit-packing.
     int tiles = file_size / ((SNESBIN_TILE_PIXEL_WIDTH * SNESBIN_TILE_PIXEL_HEIGHT)
                              / (8 / SNESBIN_IMAGE_BITS_PER_PIXEL));
+
+    // * Width: if less than 128 pixels wide worth of
+    //          tiles, then use cumulative tile width.
+    //          Otherwise default to 128 (8 tiles)
     if ((tiles * SNESBIN_TILE_PIXEL_WIDTH) >= SNESBIN_IMAGE_WIDTH_DEFAULT) {
         *ptr_width = SNESBIN_IMAGE_WIDTH_DEFAULT;
     } else {
         *ptr_width = (tiles * SNESBIN_TILE_PIXEL_WIDTH);
     }
 
-    // Integer rounding up: (x + (n-1)) / n
-    *ptr_height = (((tiles * SNESBIN_TILE_PIXEL_WIDTH)
-                    + (SNESBIN_IMAGE_WIDTH_DEFAULT - 1))
-                   / SNESBIN_IMAGE_WIDTH_DEFAULT)
-                  * SNESBIN_TILE_PIXEL_HEIGHT;
+    // * Height is a function of width, tile height and number of tiles
+    //   Round up: Integer rounding up: (x + (n-1)) / n
+    *ptr_height = (((tiles * SNESBIN_TILE_PIXEL_WIDTH) + (SNESBIN_IMAGE_WIDTH_DEFAULT - 1))
+                   / SNESBIN_IMAGE_WIDTH_DEFAULT);
+    // Now scale up by the tile height
+    *ptr_height *= SNESBIN_TILE_PIXEL_HEIGHT;
 
-//    *ptr_width = SNESBIN_IMAGE_WIDTH_DEFAULT;
-//    *ptr_height = file_size / SNESBIN_IMAGE_WIDTH_DEFAULT;
 
 
     printf("File size %ld bytes\n", file_size);

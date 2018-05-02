@@ -30,6 +30,8 @@ int read_snesbin(const gchar * filename)
 
     FILE * file;
     long int filesize;
+
+    // TODO : Any reason not to change void* to unsigned char* for ptr_file_data?
     void * filedata = NULL;
 
     guchar * image_data = NULL,
