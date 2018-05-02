@@ -23,3 +23,4 @@
 #include <stdint.h>
 //#include <libgimp/gimp.h>
 
+int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * ptr_width, int * ptr_height, unsigned char ** ptr_ptr_image_data, unsigned char ** ptr_ptr_color_map_data, int * color_map_size);

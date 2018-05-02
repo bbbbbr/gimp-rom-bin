@@ -30,11 +30,15 @@ int read_snesbin(const gchar * filename)
 
     FILE * file;
     long int filesize;
-    void * filedata;
+    void * filedata = NULL;
 
-    guchar * image_data,
-           * color_map_data;
-    int width, height;
+    guchar * image_data = NULL,
+           * color_map_data = NULL;
+
+    int width = 0,
+        height = 0;
+    int color_map_size = 0;
+
     gint32 new_image_id,
            new_layer_id;
     GimpDrawable * drawable;
@@ -66,18 +70,21 @@ int read_snesbin(const gchar * filename)
 
     // Perform the load procedure and free the raw data.
 // TODO: load image
-//    status = snesbin_decode_to_indexed(filedata, filesize, &width, &height, &image_data, &color_map_data);
+    status = snesbin_decode_to_indexed(filedata, filesize, &width, &height, &image_data, &color_map_data, &color_map_size);
 
     free(filedata);
 
     // Check to make sure that the load was successful
-    if (status != 0)
+    if (0 != status)
     {
-        if(image_data)
+        printf("Image load failed %lx, %lx\n", (unsigned long)image_data, (unsigned long)color_map_data);
+
+        if (image_data)
             free(image_data);
 
-        if(color_map_data)
+        if (color_map_data)
             free(color_map_data);
+
         return -1;
     }
 
@@ -100,7 +107,7 @@ int read_snesbin(const gchar * filename)
 
     // Set up the indexed color map
 // TODO:set color map
-//    gimp_image_set_cmap (new_image_id, color_map_data, YYCHR_COLOR_MAP_SIZE);
+    gimp_image_set_cmap (new_image_id, color_map_data, color_map_size);
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,

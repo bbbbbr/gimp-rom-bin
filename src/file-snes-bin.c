@@ -139,7 +139,7 @@ void run(const gchar * name,
         }
 
         // Now read the image
-// TODO        new_image_id = read_snesbin(param[1].data.d_string);
+        new_image_id = read_snesbin(param[1].data.d_string);
 
         // Check for an error
         if(new_image_id == -1)
