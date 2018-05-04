@@ -113,7 +113,7 @@ int read_snesbin(const gchar * filename)
 
 
     // Set up the indexed color map
-// TODO:set color map
+    // TODO: deprecated API call, Update to gimp_image_set_colormap()
     gimp_image_set_cmap (new_image_id, color_map_data, color_map_size);
 
     // Get a pixel region from the layer
