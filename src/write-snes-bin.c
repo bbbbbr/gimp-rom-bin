@@ -17,6 +17,7 @@
 =======================================================================*/
 
 #include "write-snes-bin.h"
+#include "lib_snesbin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,20 +26,28 @@
 
 int write_snesbin(const gchar * filename, gint drawable_id, float quality)
 {
+    int status = 1;
+
     GimpDrawable * drawable;
     gint bpp;
     GimpPixelRgn rgn;
-    long int data_size;
-    void * image_data;
-    size_t output_size;
-    uint8_t * raw_data;
+
+    long int source_data_size = 0;
+    guchar * source_image_data = NULL;
+
+    // TODO: was size_t output_size = 0;
+    long int output_size = 0;
+    unsigned char * output_data = NULL;
     FILE * file;
 
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
 
     // Get the BPP
+    // This should be 1 byte per pixel (INDEXED)
     bpp = gimp_drawable_bpp(drawable_id);
+
+    // TODO: abort if it's not 1 Byte Per Pixel
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
@@ -48,30 +57,40 @@ int write_snesbin(const gchar * filename, gint drawable_id, float quality)
                         drawable->height,
                         FALSE, FALSE);
 
+
     // Determine the size of the array of image data to get
     // and allocate it.
-    data_size = drawable->width * drawable->height * bpp;
-    image_data = malloc(data_size);
+    source_data_size = drawable->width * drawable->height * bpp;
+    source_image_data = malloc(source_data_size);
 
     // Get the image data
     gimp_pixel_rgn_get_rect(&rgn,
-                            (guchar *)image_data,
+                            source_image_data,
                             0, 0,
                             drawable->width,
                             drawable->height);
 
 /*
-    // TODO: Encode image data to bin file + output format option/dialog
     // We have the image data, now encode it.
     output_size = WebPEncodeRGB((const uint8_t *)image_data,
                                 drawable->width,
                                 drawable->height,
                                 drawable->width * 3,
                                 quality,
-                                &raw_data);
+                                &output_data);
+
 */
+
+    // TODO: Encode image data to bin file + output format option/dialog
+    status = snesbin_encode_to_indexed(source_image_data,
+                                       drawable->width,
+                                       drawable->height,
+                                       &output_size,
+                                       &output_data);
+
+
     // Free the image data
-    free(image_data);
+    free(source_image_data);
 
     // Detach the drawable
     gimp_drawable_detach(drawable);
@@ -79,7 +98,7 @@ int write_snesbin(const gchar * filename, gint drawable_id, float quality)
     // Make sure that the write was successful
     if(output_size == FALSE)
     {
-        free(raw_data);
+        free(output_data);
         return 0;
     }
 
@@ -87,13 +106,13 @@ int write_snesbin(const gchar * filename, gint drawable_id, float quality)
     file = fopen(filename, "wb");
     if(!file)
     {
-        free(raw_data);
+        free(output_data);
         return 0;
     }
 
-    // Write the data and be done with it.
-    fwrite(raw_data, output_size, 1, file);
-    free(raw_data);
+    // Write the data and close it
+    fwrite(output_data, output_size, 1, file);
+    free(output_data);
     fclose(file);
 
     return 1;

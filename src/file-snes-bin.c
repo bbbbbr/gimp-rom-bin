@@ -126,6 +126,7 @@ void run(const gchar * name,
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
+
     // Check to see if this is the load procedure
     if(!strcmp(name, LOAD_PROCEDURE))
     {
@@ -156,6 +157,8 @@ void run(const gchar * name,
     }
     else if(!strcmp(name, SAVE_PROCEDURE))
     {
+        // This is the export procedure
+
         gint32 image_id, drawable_id;
         int status = 1;
         float quality;
@@ -183,15 +186,17 @@ void run(const gchar * name,
             case GIMP_EXPORT_EXPORT:
             case GIMP_EXPORT_IGNORE:
 
+/*
+                // TODO: re-enable export settings dialog
                 // Now get the settings
                 if(!export_dialog(&quality))
                 {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
                 }
-
-//                status = write_snesbin(param[3].data.d_string,
-//                                    drawable_id, quality);
+*/
+                status = write_snesbin(param[3].data.d_string,
+                                       drawable_id, quality);
                 gimp_image_delete(image_id);
 
                 break;

@@ -71,8 +71,13 @@ int read_snesbin(const gchar * filename)
 
 
     // Perform the load procedure and free the raw data.
-// TODO: load image
-    status = snesbin_decode_to_indexed(filedata, filesize, &width, &height, &image_data, &color_map_data, &color_map_size);
+    status = snesbin_decode_to_indexed(filedata,
+                                       filesize,
+                                       &width,
+                                       &height,
+                                       &image_data,
+                                       &color_map_data,
+                                       &color_map_size);
 
     free(filedata);
 
