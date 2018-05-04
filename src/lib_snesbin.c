@@ -103,6 +103,7 @@ int snesbin_decode_image_data(void * file_data, long int * file_size, long int *
         }
     }
 
+    // Return success
     return 0;
 }
 
@@ -137,6 +138,8 @@ int snesbin_decode_read_color_data(unsigned char * color_map_data)
     color_map_data[colorindex++] = 0xE7;
     color_map_data[colorindex++] = 0x9C;
 
+
+    // Return success
     return 0;
 }
 
@@ -167,10 +170,7 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     *ptr_height *= SNESBIN_TILE_PIXEL_HEIGHT;
 
 
-
-    printf("File size %ld bytes\n", file_size);
-    printf("Image size width = %d x height = %d\n", *ptr_width, *ptr_height);
-    printf("Allocating image buffer of size %d bytes\n", *ptr_width * *ptr_height);
+    // Allocate the incoming image buffer
     *ptr_ptr_image_data = malloc(*ptr_width * *ptr_height);
 
     // Make sure the alloc succeeded
@@ -188,24 +188,21 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
         return -1;
 
 
+    // Allocate the color map buffer
     *color_map_size = SNESBIN_DECODED_COLOR_MAP_SIZE;
-    printf("Allocating color map buffer of size %d bytes\n", *color_map_size * SNESBIN_DECODED_COLOR_MAP_BYTES_PER_PIXEL);
     *ptr_ptr_color_map_data = malloc(*color_map_size * SNESBIN_DECODED_COLOR_MAP_BYTES_PER_PIXEL);
 
     // Make sure the alloc succeeded
     if(*ptr_ptr_color_map_data == NULL)
         return -1;
 
-    printf("Reading color map\n");
-
     // Read the color map data
     if (0 != snesbin_decode_read_color_data(*ptr_ptr_color_map_data))
         return -1;
 
-    printf("Color map done\n");
 
+    // Return success
     return 0;
-
 }
 
 
@@ -217,8 +214,6 @@ int snesbin_encode_image_data(unsigned char * ptr_source_image_data, int source_
     unsigned char pixdata[2];
     unsigned char * image_pixel;
     unsigned char * ptr_output_offset;
-
-    printf("Entering Encode\n");
 
     // Check incoming buffers & vars
     if ((ptr_source_image_data == NULL) ||
@@ -232,8 +227,6 @@ int snesbin_encode_image_data(unsigned char * ptr_source_image_data, int source_
     // Make sure there is enough size in the output buffer
     if (*ptr_output_size < (source_width * source_height) / (8 / SNESBIN_IMAGE_BITS_PER_PIXEL))
         return -1;
-
-    printf("Starting Encode\n");
 
     // 2BPP SNES/GBA:
     //
@@ -284,24 +277,16 @@ int snesbin_encode_image_data(unsigned char * ptr_source_image_data, int source_
         }
     }
 
+    // Return success
     return 0;
 }
 
 
 
-
-// TODO
 int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data)
 {
-
-//    long int file_offset = 0;
-
     // Set output file size based on Width, Height and bit packing
     *ptr_output_size = (source_width * source_height) / (8 / SNESBIN_IMAGE_BITS_PER_PIXEL);
-
-    printf("File output size %ld bytes\n", *ptr_output_size);
-    printf("Image size width = %d x height = %d\n", source_width, source_height);
-    printf("Allocating image buffer of size %ld bytes\n", *ptr_output_size);
 
     *ptr_ptr_output_data = malloc(*ptr_output_size);
 
@@ -319,7 +304,6 @@ int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_
         return -1;
 
 
-
+    // Return success
     return 0;
-
 }
