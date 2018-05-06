@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int write_snesbin(const gchar * filename, gint drawable_id, float quality)
+int write_snesbin(const gchar * filename, gint drawable_id, float quality, int output_mode)
 {
     int status = 1;
 
@@ -70,23 +70,15 @@ int write_snesbin(const gchar * filename, gint drawable_id, float quality)
                             drawable->width,
                             drawable->height);
 
-/*
-    // We have the image data, now encode it.
-    output_size = WebPEncodeRGB((const uint8_t *)image_data,
-                                drawable->width,
-                                drawable->height,
-                                drawable->width * 3,
-                                quality,
-                                &output_data);
-
-*/
+    // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 
     // TODO: Encode image data to bin file + output format option/dialog
     status = snesbin_encode_to_indexed(source_image_data,
                                        drawable->width,
                                        drawable->height,
                                        &output_size,
-                                       &output_data);
+                                       &output_data,
+                                       output_mode);
 
 
     // Free the image data

@@ -327,6 +327,7 @@ int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int so
 }
 
 
+// TODO : can this be merged into the 2bpp code
 int snesbin_encode_image_data_4bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data)
 {
     unsigned char pixdata[4];
@@ -574,52 +575,61 @@ else if (SNES_BITS_PER_PIXEL_4BPP == bpp_mode)
 
 
 
-int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data)
+int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data, int output_mode)
 {
 
 
-unsigned char bpp_mode = SNES_BITS_PER_PIXEL_4BPP;
+    // unsigned char bpp_mode = SNES_BITS_PER_PIXEL_4BPP;
 
-if (SNES_BITS_PER_PIXEL_2BPP == bpp_mode)
-{
-    // Set output file size based on Width, Height and bit packing
-    *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP);
+    if (SNESBIN_MODE_2BPP == output_mode) {
 
-    *ptr_ptr_output_data = malloc(*ptr_output_size);
+        printf("Export 2bpp mode\n");
 
-    // Did the alloc succeed?
-    if(*ptr_ptr_output_data == NULL)
-        return -1;
+        // Set output file size based on Width, Height and bit packing
+        *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP);
 
+        *ptr_ptr_output_data = malloc(*ptr_output_size);
 
-    // Encode the image data
-    if (0 != snesbin_encode_image_data_2bpp(ptr_source_image_data,
-                                            source_width,
-                                            source_height,
-                                            ptr_output_size,
-                                           *ptr_ptr_output_data));
-        return -1;
-}
-else if (SNES_BITS_PER_PIXEL_4BPP == bpp_mode)
-{
-    // Set output file size based on Width, Height and bit packing
-    *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_4BPP);
-
-    *ptr_ptr_output_data = malloc(*ptr_output_size);
-
-    // Did the alloc succeed?
-    if(*ptr_ptr_output_data == NULL)
-        return -1;
+        // Did the alloc succeed?
+        if(*ptr_ptr_output_data == NULL)
+            return -1;
 
 
-    // Encode the image data
-    if (0 != snesbin_encode_image_data_4bpp(ptr_source_image_data,
-                                            source_width,
-                                            source_height,
-                                            ptr_output_size,
-                                           *ptr_ptr_output_data));
-        return -1;
-}
+        // Encode the image data
+        if (0 != snesbin_encode_image_data_2bpp(ptr_source_image_data,
+                                                source_width,
+                                                source_height,
+                                                ptr_output_size,
+                                               *ptr_ptr_output_data));
+            return -1;
+    }
+    else if (SNESBIN_MODE_4BPP == output_mode) {
+
+        printf("Export 4bpp mode\n");
+
+        // Set output file size based on Width, Height and bit packing
+        *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_4BPP);
+
+        *ptr_ptr_output_data = malloc(*ptr_output_size);
+
+        // Did the alloc succeed?
+        if(*ptr_ptr_output_data == NULL)
+            return -1;
+
+
+        // Encode the image data
+        if (0 != snesbin_encode_image_data_4bpp(ptr_source_image_data,
+                                                source_width,
+                                                source_height,
+                                                ptr_output_size,
+                                               *ptr_ptr_output_data));
+            return -1;
+    }
+    else {
+            printf("Export mode note found!\n");
+            return -1;
+    }
+
 
     // Return success
     return 0;

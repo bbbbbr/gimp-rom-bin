@@ -16,6 +16,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
+#include "lib_snesbin.h"
+
 #include <stdio.h>
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
@@ -24,10 +26,12 @@ extern const char SAVE_PROCEDURE[];
 extern const char BINARY_NAME[];
 
 // Response structure
-struct webp_data {
+struct snesbin_data {
     int       * response;
     GtkObject * quality_scale;
+    GtkWidget * output_mode_combo;
     float     * quality;
+    int      * output_mode;
 };
 
 void on_response(GtkDialog * dialog,
@@ -36,13 +40,36 @@ void on_response(GtkDialog * dialog,
 {
     // Basically all we want to do is grab the value
     // of the slider and store it in user_data.
-    struct webp_data * data = user_data;
+    struct snesbin_data * data = user_data;
+
     GtkHScale * hscale = GIMP_SCALE_ENTRY_SCALE(data->quality_scale);
     gdouble returned_quality;
 
     // Get the value
     returned_quality = gtk_range_get_value(GTK_RANGE(hscale));
     *(data->quality) = returned_quality;
+
+
+    // Connect to the combo box pointer
+    GtkWidget * output_mode_combo = data->output_mode_combo;
+
+    // Get currently selected string from combo box
+    gchar *string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(output_mode_combo) );
+
+    // TODO: convert to #defines or similar
+    if (!(g_strcmp0(string, "2bpp SNES/GB")))
+        *(data->output_mode) = SNESBIN_MODE_2BPP;
+    else if (!(g_strcmp0(string, "4bpp SNES")))
+        *(data->output_mode) = SNESBIN_MODE_4BPP;
+    else
+        *(data->output_mode) = -1; //
+
+
+    g_print( "Selected: >> %s <<\n", ( string ? string : "NULL" ) );
+
+    // Free string
+    g_free( string );
+
 
     // Quit the loop
     gtk_main_quit();
@@ -51,18 +78,21 @@ void on_response(GtkDialog * dialog,
         *(data->response) = 1;
 }
 
-int export_dialog(float * quality)
+int export_dialog(float * quality, int * output_mode)
 {
     int response = 0;
-    struct webp_data data;
+    struct snesbin_data data;
     GtkWidget * dialog;
     GtkWidget * vbox;
     GtkWidget * label;
     GtkWidget * table;
     GtkObject * scale;
 
+    GtkWidget * output_mode_combo;
+//    GList     * cbitems = NULL;
+
     // Create the dialog
-    dialog = gimp_export_dialog_new("WebP",
+    dialog = gimp_export_dialog_new("SNES bin",
                                     BINARY_NAME,
                                     SAVE_PROCEDURE);
 
@@ -74,7 +104,7 @@ int export_dialog(float * quality)
     gtk_widget_show(vbox);
 
     // Create the label
-    label = gtk_label_new("The options below allow you to customize\nthe WebP image that is created.");
+    label = gtk_label_new("The options below allow you to customize\nthe SNES bin image that is created.");
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 2);
     gtk_widget_show(label);
 
@@ -92,10 +122,26 @@ int export_dialog(float * quality)
                                  "Quality for encoding the image",
                                  NULL);
 
+    // Create a combo/list box for selecting the mode
+    output_mode_combo = gtk_combo_box_text_new();
+
+    // Add the mode select entries
+    // TODO: convert strings to #defines or similar
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(output_mode_combo), "2bpp SNES/GB");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(output_mode_combo), "4bpp SNES");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(output_mode_combo), 0);
+
+    // Add it to the box for display and show it
+    gtk_box_pack_start(GTK_BOX(vbox), output_mode_combo, FALSE, FALSE, 6);
+    gtk_widget_show(output_mode_combo);
+
+
     // Connect to the response signal
     data.response      = &response;
     data.quality_scale = scale;
     data.quality       = quality;
+    data.output_mode_combo = output_mode_combo;
+    data.output_mode = output_mode;
 
     g_signal_connect(dialog, "response", G_CALLBACK(on_response),   &data);
     g_signal_connect(dialog, "destroy",  G_CALLBACK(gtk_main_quit), NULL);

@@ -68,7 +68,8 @@ void query()
         { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
         { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
         { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-        { GIMP_PDB_FLOAT,    "quality",      "Quality of the image (0 <= quality <= 100)" }
+        { GIMP_PDB_FLOAT,    "quality",      "Quality of the image (0 <= quality <= 100)" },
+        { GIMP_PDB_FLOAT,    "output_mode",  "SNES image format" }
     };
 
     // Install the load procedure
@@ -161,7 +162,8 @@ void run(const gchar * name,
 
         gint32 image_id, drawable_id;
         int status = 1;
-        float quality;
+        float quality = 0;
+        int output_mode = -1;
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
@@ -186,17 +188,17 @@ void run(const gchar * name,
             case GIMP_EXPORT_EXPORT:
             case GIMP_EXPORT_IGNORE:
 
-/*
                 // TODO: re-enable export settings dialog
+                // TODO: update for SNES bin files
                 // Now get the settings
-                if(!export_dialog(&quality))
+                if(!export_dialog(&quality, &output_mode))
                 {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
                 }
-*/
+
                 status = write_snesbin(param[3].data.d_string,
-                                       drawable_id, quality);
+                                       drawable_id, quality, output_mode);
                 gimp_image_delete(image_id);
 
                 break;

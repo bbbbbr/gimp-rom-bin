@@ -18,4 +18,4 @@
 
 #include <glib.h>
 
-int write_snesbin(const gchar *, gint, float);
+int write_snesbin(const gchar *, gint, float, int);
