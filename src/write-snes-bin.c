@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int write_snesbin(const gchar * filename, gint drawable_id, float quality, int output_mode)
+int write_snesbin(const gchar * filename, gint drawable_id, int output_mode)
 {
     int status = 1;
 
