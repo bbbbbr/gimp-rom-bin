@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int read_snesbin(const gchar * filename)
+int read_snesbin(const gchar * filename, int image_mode)
 {
     int status = 1;
 
@@ -77,7 +77,8 @@ int read_snesbin(const gchar * filename)
                                        &height,
                                        &image_data,
                                        &color_map_data,
-                                       &color_map_size);
+                                       &color_map_size,
+                                       image_mode);
 
     free(filedata);
 

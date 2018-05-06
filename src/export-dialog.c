@@ -16,6 +16,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
+// TODO: rename to settings-dialog.c/h
+
 #include "lib_snesbin.h"
 
 #include <stdio.h>
@@ -28,8 +30,8 @@ extern const char BINARY_NAME[];
 // Response structure
 struct snesbin_data {
     int       * response;
-    GtkWidget * output_mode_combo;
-    int      * output_mode;
+    GtkWidget * image_mode_combo;
+    int      * image_mode;
 };
 
 void on_response(GtkDialog * dialog,
@@ -41,17 +43,17 @@ void on_response(GtkDialog * dialog,
 
     // Connect to the combo box pointer
     // Then get currently selected string from combo box
-    GtkWidget * output_mode_combo = data->output_mode_combo;
-    gchar *string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(output_mode_combo) );
+    GtkWidget * image_mode_combo = data->image_mode_combo;
+    gchar *string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(image_mode_combo) );
 
     // TODO: convert strings to centralized definition
     // Match the string up to an output mode
     if (!(g_strcmp0(string, "2bpp SNES/GB")))
-        *(data->output_mode) = SNESBIN_MODE_2BPP;
+        *(data->image_mode) = SNESBIN_MODE_2BPP;
     else if (!(g_strcmp0(string, "4bpp SNES")))
-        *(data->output_mode) = SNESBIN_MODE_4BPP;
+        *(data->image_mode) = SNESBIN_MODE_4BPP;
     else
-        *(data->output_mode) = -1; //
+        *(data->image_mode) = -1; //
 
     g_print( "Selected: >> %s <<\n", ( string ? string : "NULL" ) );
 
@@ -66,7 +68,7 @@ void on_response(GtkDialog * dialog,
         *(data->response) = 1;
 }
 
-int export_dialog(int * output_mode)
+int export_dialog(int * image_mode)
 {
     int response = 0;
     struct snesbin_data data;
@@ -75,9 +77,10 @@ int export_dialog(int * output_mode)
     GtkWidget * label;
     GtkWidget * table;
 
-    GtkWidget * output_mode_combo;
+    GtkWidget * image_mode_combo;
 
 
+    // TODO : make a new dialog with correct phrasing for Import (may not be a convencience function equivalent for Import)
     // Create the dialog
     dialog = gimp_export_dialog_new("SNES bin",
                                     BINARY_NAME,
@@ -97,26 +100,26 @@ int export_dialog(int * output_mode)
 
 
     // Create a combo/list box for selecting the mode
-    output_mode_combo = gtk_combo_box_text_new();
+    image_mode_combo = gtk_combo_box_text_new();
 
     // Add the mode select entries
     // TODO: convert strings to centralized definition
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(output_mode_combo), "2bpp SNES/GB");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(output_mode_combo), "4bpp SNES");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
 
     // Select default value
     // TODO: try to auto-detect based on number of colors? (export only)
-    gtk_combo_box_set_active(GTK_COMBO_BOX(output_mode_combo), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(image_mode_combo), 0);
 
     // Add it to the box for display and show it
-    gtk_box_pack_start(GTK_BOX(vbox), output_mode_combo, FALSE, FALSE, 6);
-    gtk_widget_show(output_mode_combo);
+    gtk_box_pack_start(GTK_BOX(vbox), image_mode_combo, FALSE, FALSE, 6);
+    gtk_widget_show(image_mode_combo);
 
 
     // Connect the controls to the response signal
     data.response      = &response;
-    data.output_mode_combo = output_mode_combo;
-    data.output_mode = output_mode;
+    data.image_mode_combo = image_mode_combo;
+    data.image_mode = image_mode;
 
     g_signal_connect(dialog, "response", G_CALLBACK(on_response),   &data);
     g_signal_connect(dialog, "destroy",  G_CALLBACK(gtk_main_quit), NULL);

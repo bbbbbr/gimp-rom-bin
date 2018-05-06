@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int write_snesbin(const gchar * filename, gint drawable_id, int output_mode)
+int write_snesbin(const gchar * filename, gint drawable_id, int image_mode)
 {
     int status = 1;
 
@@ -78,7 +78,7 @@ int write_snesbin(const gchar * filename, gint drawable_id, int output_mode)
                                        drawable->height,
                                        &output_size,
                                        &output_data,
-                                       output_mode);
+                                       image_mode);
 
 
     // Free the image data

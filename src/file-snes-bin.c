@@ -68,7 +68,7 @@ void query()
         { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
         { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
         { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-        { GIMP_PDB_FLOAT,    "output_mode",  "SNES image format" }
+        { GIMP_PDB_FLOAT,    "image_mode",  "SNES image format" }
     };
 
     // Install the load procedure
@@ -131,6 +131,7 @@ void run(const gchar * name,
     if(!strcmp(name, LOAD_PROCEDURE))
     {
         int new_image_id;
+        int image_mode = -1;
 
         // Check to make sure all parameters were supplied
         if(nparams != 3)
@@ -139,8 +140,22 @@ void run(const gchar * name,
             return;
         }
 
+
+        printf("Trying to load settings dialog\n");
+
+        // Try to export the image
+        gimp_ui_init(BINARY_NAME, FALSE);
+
+
+        // Get the settings
+        if(!export_dialog(&image_mode))
+        {
+            return_values[0].data.d_status = GIMP_PDB_CANCEL;
+            return;
+        }
+
         // Now read the image
-        new_image_id = read_snesbin(param[1].data.d_string);
+        new_image_id = read_snesbin(param[1].data.d_string, image_mode);
 
         // Check for an error
         if(new_image_id == -1)
@@ -161,7 +176,7 @@ void run(const gchar * name,
 
         gint32 image_id, drawable_id;
         int status = 1;
-        int output_mode = -1;
+        int image_mode = -1;
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
@@ -187,17 +202,18 @@ void run(const gchar * name,
             case GIMP_EXPORT_IGNORE:
 
                 // Now get the settings
-                if(!export_dialog(&output_mode))
+                if(!export_dialog(&image_mode))
                 {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
                 }
 
                 status = write_snesbin(param[3].data.d_string,
-                                       drawable_id, output_mode);
+                                       drawable_id, image_mode);
                 gimp_image_delete(image_id);
 
                 break;
+
             case GIMP_EXPORT_CANCEL:
                 return_values[0].data.d_status = GIMP_PDB_CANCEL;
                 return;

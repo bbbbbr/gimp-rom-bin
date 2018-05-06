@@ -16,4 +16,4 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-int export_dialog(int * );
+int export_dialog(int *);
