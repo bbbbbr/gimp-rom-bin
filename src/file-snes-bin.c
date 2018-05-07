@@ -148,7 +148,7 @@ void run(const gchar * name,
 
 
         // Get the settings
-        if(!export_dialog(&image_mode))
+        if(!export_dialog(&image_mode, name))
         {
             return_values[0].data.d_status = GIMP_PDB_CANCEL;
             return;
@@ -202,7 +202,7 @@ void run(const gchar * name,
             case GIMP_EXPORT_IGNORE:
 
                 // Now get the settings
-                if(!export_dialog(&image_mode))
+                if(!export_dialog(&image_mode, name))
                 {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;

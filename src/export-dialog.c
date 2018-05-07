@@ -21,17 +21,19 @@
 #include "lib_snesbin.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
 extern const char SAVE_PROCEDURE[];
+extern const char LOAD_PROCEDURE[];
 extern const char BINARY_NAME[];
 
 // Response structure
 struct snesbin_data {
     int       * response;
     GtkWidget * image_mode_combo;
-    int      * image_mode;
+    int       * image_mode;
 };
 
 void on_response(GtkDialog * dialog,
@@ -68,7 +70,7 @@ void on_response(GtkDialog * dialog,
         *(data->response) = 1;
 }
 
-int export_dialog(int * image_mode)
+int export_dialog(int * image_mode, const gchar * name)
 {
     int response = 0;
     struct snesbin_data data;
@@ -80,11 +82,36 @@ int export_dialog(int * image_mode)
     GtkWidget * image_mode_combo;
 
 
-    // TODO : make a new dialog with correct phrasing for Import (may not be a convencience function equivalent for Import)
-    // Create the dialog
-    dialog = gimp_export_dialog_new("SNES bin",
-                                    BINARY_NAME,
-                                    SAVE_PROCEDURE);
+    // Create the export dialog
+
+    if(!strcmp(name, SAVE_PROCEDURE)) {
+        // If Exporting use the export dialog convenience function
+        dialog = gimp_export_dialog_new("SNES bin",
+                                        BINARY_NAME,
+                                        SAVE_PROCEDURE);
+    }
+    else {
+
+        // If Opening then make an equivalent dialog
+        gchar     *title  = g_strconcat ("Open Image as ", "SNES bin", NULL);
+
+        dialog = gimp_dialog_new (title, BINARY_NAME,
+                                  NULL, 0,
+                                  gimp_standard_help_func, LOAD_PROCEDURE,
+                                  "_Cancel", GTK_RESPONSE_CANCEL,
+                                  "_Open", GTK_RESPONSE_OK,
+                                  NULL);
+
+        gtk_dialog_set_alternative_button_order (GTK_DIALOG (dialog),
+                                                 GTK_RESPONSE_OK,
+                                                 GTK_RESPONSE_CANCEL,
+                                                 -1);
+
+        gimp_window_set_transient (GTK_WINDOW (dialog));
+
+        g_free (title);
+    }
+
 
     // Create the VBox
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
