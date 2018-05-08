@@ -126,6 +126,9 @@ void query()
     //         lots of unwanted 2/4bpp dialogs.
     //
     //       * For now: use separate 2/4bpp load handlers
+    //
+    //       * Other workaround: could register a dummy handler with no preview or
+    //         non-dialog preview
     //       * Future fix? find a way to suppress the dialog or thumbnail previews
     //
     //       See: gimp_thumbnail_update_thumb, gimp/libgimpthumb/gimpthumbnail.c

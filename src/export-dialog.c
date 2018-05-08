@@ -152,6 +152,11 @@ int export_dialog(int * image_mode, const gchar * name)
     g_signal_connect(dialog, "response", G_CALLBACK(on_response),   &data);
     g_signal_connect(dialog, "destroy",  G_CALLBACK(gtk_main_quit), NULL);
 
+    // TODO: Above is spawning these errors:
+    //       IA__gtk_main_quit: assertion 'main_loops != NULL' failed
+    //       https://www.gtk.org/tutorial1.2/gtk_tut-2.html
+    //       https://ubuntuforums.org/showthread.php?t=394399
+
     // Show the dialog and run it
     gtk_widget_show(dialog);
     gimp_dialog_run(GIMP_DIALOG(dialog));
