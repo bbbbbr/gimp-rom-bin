@@ -21,11 +21,13 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
+#include "lib_snesbin.h"
 #include "read-snes-bin.h"
 #include "write-snes-bin.h"
 #include "export-dialog.h"
 
-const char LOAD_PROCEDURE[] = "file-snes-bin-load";
+const char LOAD_PROCEDURE_2BPP[] = "file-snes-bin-load-2bpp";
+const char LOAD_PROCEDURE_4BPP[] = "file-snes-bin-load-4bpp";
 const char SAVE_PROCEDURE[] = "file-snes-bin-save";
 const char BINARY_NAME[]    = "file-snes-bin";
 
@@ -72,13 +74,28 @@ void query()
     };
 
     // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE,
-                           "Loads images in the SNES bin file format",
-                           "Loads images in the SNES bin file format",
+    gimp_install_procedure(LOAD_PROCEDURE_2BPP,
+                           "Loads images in the SNES bin 2-bpp file format",
+                           "Loads images in the SNES bin 2-bpp file format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "SNES bin image",
+                           "SNES bin image 2-bpp",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+    // Install the load procedure
+    gimp_install_procedure(LOAD_PROCEDURE_4BPP,
+                           "Loads images in the SNES bin 4-bpp file format",
+                           "Loads images in the SNES bin 4-bpp file format",
+                           "Others & Nathan Osman (webp plugin base)",
+                           "Copyright Others & Nathan Osman (webp plugin base)",
+                           "2018",
+                           "SNES bin image 4-bpp",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -102,8 +119,23 @@ void query()
                            NULL);
 
     // Register the load handlers
-    gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
+
+    // TODO: PROBLEM/WORKAROUND-
+    //       * LOAD gets called to generate a thumbnail for an
+    //         image when browsing in the open dialog. This spawns
+    //         lots of unwanted 2/4bpp dialogs.
+    //
+    //       * For now: use separate 2/4bpp load handlers
+    //       * Future fix? find a way to suppress the dialog or thumbnail previews
+    //
+    //       See: gimp_thumbnail_update_thumb, gimp/libgimpthumb/gimpthumbnail.c
+    //            gimp/app/pdb/fileops-cmds.c, gimp/app/plug-in/gimpplugin.h
+
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_2BPP, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE_2BPP, "bin", "");
+
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_4BPP, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE_4BPP, "bin", "");
 
     // Now register the save handlers
     gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
@@ -128,7 +160,7 @@ void run(const gchar * name,
 
 
     // Check to see if this is the load procedure
-    if(!strcmp(name, LOAD_PROCEDURE))
+    if( !strcmp(name, LOAD_PROCEDURE_2BPP) || !strcmp(name, LOAD_PROCEDURE_4BPP) )
     {
         int new_image_id;
         int image_mode = -1;
@@ -141,18 +173,26 @@ void run(const gchar * name,
         }
 
 
-        printf("Trying to load settings dialog\n");
-
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
 
-
         // Get the settings
-        if(!export_dialog(&image_mode, name))
-        {
-            return_values[0].data.d_status = GIMP_PDB_CANCEL;
-            return;
-        }
+        // TODO: PROBLEM
+        //       * LOAD gets called to generate a thumbnail for an
+        //         image when browsing in the open dialog. This spawns
+        //         lots of unwanted 2/4bpp dialogs.
+        // if(!export_dialog(&image_mode, name))
+        // {
+        //     return_values[0].data.d_status = GIMP_PDB_CANCEL;
+        //     return;
+        // }
+
+        // This is the workaround for the thumbnail/preview dialog spawn problem
+        if(!strcmp(name, LOAD_PROCEDURE_2BPP))
+          image_mode = SNESBIN_MODE_2BPP;
+        else if (!strcmp(name, LOAD_PROCEDURE_4BPP))
+          image_mode = SNESBIN_MODE_4BPP;
+
 
         // Now read the image
         new_image_id = read_snesbin(param[1].data.d_string, image_mode);

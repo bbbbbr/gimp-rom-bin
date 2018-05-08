@@ -26,7 +26,8 @@
 #include <libgimp/gimpui.h>
 
 extern const char SAVE_PROCEDURE[];
-extern const char LOAD_PROCEDURE[];
+extern const char LOAD_PROCEDURE_2BPP[];
+extern const char LOAD_PROCEDURE_4BPP[];
 extern const char BINARY_NAME[];
 
 // Response structure
@@ -84,12 +85,12 @@ int export_dialog(int * image_mode, const gchar * name)
 
     // Create the export dialog
 
-    if(!strcmp(name, SAVE_PROCEDURE)) {
+//    if(!strcmp(name, SAVE_PROCEDURE)) {
         // If Exporting use the export dialog convenience function
         dialog = gimp_export_dialog_new("SNES bin",
                                         BINARY_NAME,
                                         SAVE_PROCEDURE);
-    }
+/*    }
     else {
 
         // If Opening then make an equivalent dialog
@@ -111,7 +112,7 @@ int export_dialog(int * image_mode, const gchar * name)
 
         g_free (title);
     }
-
+*/
 
     // Create the VBox
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
