@@ -35,7 +35,8 @@
 #define SNES_PIXELS_PER_DWORD_4BPP          8    // 1 pixel = 4 bits, 8 pixels are in 2 + 2 consecutive bytes among 18 bytes ([0],[1] ~14 bytes~ [3],[4])
 
 #define DECODED_IMAGE_BYTES_PER_PIXEL       1    // 1 byte per pixel in indexed color mode
-#define DECODED_COLOR_MAP_SIZE              16 // 4    // TODO, support 2 & 4 BPP modes
+#define DECODED_COLOR_MAP_SIZE_2BPP         4
+#define DECODED_COLOR_MAP_SIZE_4BPP         16
 #define DECODED_COLOR_MAP_BYTES_PER_PIXEL   3    // R,G,B
 #define TILE_PIXEL_WIDTH                    8
 #define TILE_PIXEL_HEIGHT                   8
@@ -435,21 +436,23 @@ int snesbin_load_color_data(unsigned char * ptr_color_map_data, int color_map_si
     status += snesbin_insert_color_to_map(0xAD, 0xB5, 0x31, ptr_color_map_data, &color_index, color_map_size);
     status += snesbin_insert_color_to_map(0xC6, 0xE7, 0x9C, ptr_color_map_data, &color_index, color_map_size);
 
-    // 4BPP +
-    status += snesbin_insert_color_to_map(0xF8, 0xF8, 0x00, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xF8, 0xC0, 0x00, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xF8, 0x78, 0x00, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xF8, 0x00, 0x00, ptr_color_map_data, &color_index, color_map_size);
+    if (DECODED_COLOR_MAP_SIZE_4BPP == color_map_size) {
+        // 4BPP +
+        status += snesbin_insert_color_to_map(0xF8, 0xF8, 0x00, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xF8, 0xC0, 0x00, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xF8, 0x78, 0x00, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xF8, 0x00, 0x00, ptr_color_map_data, &color_index, color_map_size);
 
-    status += snesbin_insert_color_to_map(0xFA, 0xD3, 0x5A, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x29, 0xA2, 0x29, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x00, 0x78, 0x48, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x00, 0x38, 0x39 ,ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xFA, 0xD3, 0x5A, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0x29, 0xA2, 0x29, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0x00, 0x78, 0x48, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0x00, 0x38, 0x39 ,ptr_color_map_data, &color_index, color_map_size);
 
-    status += snesbin_insert_color_to_map(0xD8, 0xF0, 0xF8, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xA8, 0xC0, 0xC8, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x90, 0xA8, 0xB0, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x60, 0x78, 0x90, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xD8, 0xF0, 0xF8, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0xA8, 0xC0, 0xC8, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0x90, 0xA8, 0xB0, ptr_color_map_data, &color_index, color_map_size);
+        status += snesbin_insert_color_to_map(0x60, 0x78, 0x90, ptr_color_map_data, &color_index, color_map_size);
+    }
 
     // Check if an error occurred
     if (0 != status)
@@ -471,6 +474,10 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     if (SNESBIN_MODE_2BPP == image_mode) {
 
         printf("Import mode 2bpp\n");
+
+        // Allocate the color map buffer
+        *color_map_size = DECODED_COLOR_MAP_SIZE_2BPP;
+
 
         // Set Width & Height
         // Tiles are 8x8 pixels. Calculate size factoring in bit-packing.
@@ -513,6 +520,10 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     else if (SNESBIN_MODE_4BPP == image_mode) {
 
         printf("Import mode 4bpp\n");
+
+        // Allocate the color map buffer
+        *color_map_size = DECODED_COLOR_MAP_SIZE_4BPP;
+
 
         // Set Width & Height
         // Tiles are 8x8 pixels. Calculate size factoring in bit-packing.
@@ -560,7 +571,6 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
 
 
     // Allocate the color map buffer
-    *color_map_size = DECODED_COLOR_MAP_SIZE;
     *ptr_ptr_color_map_data = malloc(*color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL);
 
     // Make sure the alloc succeeded
