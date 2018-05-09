@@ -193,6 +193,7 @@ void run(const gchar * name,
         // This is the workaround for the thumbnail/preview dialog spawn problem
         if(!strcmp(name, LOAD_PROCEDURE_2BPP))
           image_mode = SNESBIN_MODE_2BPP;
+
         else if (!strcmp(name, LOAD_PROCEDURE_4BPP))
           image_mode = SNESBIN_MODE_4BPP;
 

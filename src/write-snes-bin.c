@@ -47,7 +47,10 @@ int write_snesbin(const gchar * filename, gint drawable_id, int image_mode)
     // This should be 1 byte per pixel (INDEXED)
     bpp = gimp_drawable_bpp(drawable_id);
 
-    // TODO: abort if it's not 1 Byte Per Pixel
+    // Abort if it's not 1 Byte Per Pixel
+    if (1 != bpp) {
+        return 0;
+    }
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
