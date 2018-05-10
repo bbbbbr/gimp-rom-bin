@@ -30,7 +30,8 @@
 
 #define SNES_BITS_PER_PIXEL_2BPP            2    // 2 bits per pixel mode
 #define SNES_BITS_PER_PIXEL_4BPP            4    // 4 bits per pixel mode
-#define SNES_BYTE_GAP_LOHI_PLANES_4BPP      14   // In 4bpp mode there are 14 bytes between the pairs of Low and High bytes
+#define SNES_BYTE_GAP_LOHI_PLANES_4BPP      16   // In 4bpp mode there is a 16 byte offset between the pairs of Low and High bytes
+#define SNES_BYTE_ROW_INCREMENT_4BPP        2    // In 4bpp mode, two adjacent bytes form bitplanes 1 & 2 (out of 1,2,3,4) of a row, this is the increment amount for decoding
 #define SNES_PIXELS_PER_WORD_2BPP           8    // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo...hi byte)
 #define SNES_PIXELS_PER_DWORD_4BPP          8    // 1 pixel = 4 bits, 8 pixels are in 2 + 2 consecutive bytes among 18 bytes ([0],[1] ~14 bytes~ [3],[4])
 
@@ -42,6 +43,18 @@
 #define TILE_PIXEL_HEIGHT                   8
 
 
+// 2BPP SNES/GBA:
+//
+// * Packed 8x8 Tiles - serial encoded
+// * 1 Tile row = 2 bytes (byte_lo/0, byte_hi/1)
+// * Packed Bits: 876543210, 876543210
+// *              ---------  ---------
+// * Pixel #    : 012345678  012345678
+// * Pixel l/h  : LLLLLLLLL  HHHHHHHHH
+// * So, Pixel 0 = ((byte0 >> 8) & 0x01) | ((byte1 >> 7) & 0x20)
+//
+//
+//
 // https://mrclick.zophar.net/TilEd/download/consolegfx.txt
 //
 //
@@ -129,16 +142,6 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
     if (*file_size < ((width / (8 / SNES_BITS_PER_PIXEL_2BPP)) * height))
         return -1;
 
-    // 2BPP SNES/GBA:
-    //
-    // * Packed 8x8 Tiles - serial encoded
-    // * 1 Tile row = 2 bytes (byte_lo/0, byte_hi/1)
-    // * Packed Bits: 876543210, 876543210
-    // *              ---------  ---------
-    // * Pixel #    : 012345678  012345678
-    // * Pixel l/h  : LLLLLLLLL  HHHHHHHHH
-    // * So, Pixel 0 = ((byte0 >> 8) & 0x01) | ((byte1 >> 7) & 0x20)
-    // TODO : verify lo/hi byte order
 
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
@@ -209,12 +212,10 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
                 // Read four bytes and unpack the 8 horizontal pixels
 
                 // First the LS bits
-                pixdata[0] = *((unsigned char *)file_data + (*file_offset)++);
-                pixdata[1] = *((unsigned char *)file_data + (*file_offset)++);
+                pixdata[0] = *((unsigned char *)file_data + (*file_offset));
+                pixdata[1] = *((unsigned char *)file_data + (*file_offset) + 1);
 
                 // Then the MS bits (they are in the next 16 bytes of data
-                // Note- do not increment the offset pointer here since the first byte
-                //       of a given tile is two bytes after the previous tile
                 pixdata[2] = *((unsigned char *)file_data + (*file_offset) + SNES_BYTE_GAP_LOHI_PLANES_4BPP);
                 pixdata[3] = *((unsigned char *)file_data + (*file_offset) + SNES_BYTE_GAP_LOHI_PLANES_4BPP + 1);
 
@@ -239,11 +240,14 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
                     pixdata[2] = pixdata[2] << 1;
                     pixdata[3] = pixdata[3] << 1;
                 } // End of tile-row decode loop
+
+                // Increment the pointer to the next row in the tile
+                *file_offset += SNES_BYTE_ROW_INCREMENT_4BPP;
             } // End of per-tile decode
 
             // Now advance to the start of the next tile, which is 16 bytes further
             // TODO: fix constant definition
-            *file_offset += SNES_BYTE_GAP_LOHI_PLANES_4BPP + 2;
+            *file_offset += SNES_BYTE_GAP_LOHI_PLANES_4BPP;
         }
     }
 
@@ -376,21 +380,24 @@ int snesbin_encode_image_data_4bpp(unsigned char * ptr_source_image_data, int so
                     *image_pixel++;
                 } // End of tile-row encode
 
-                // Save the LSBits two packed bytes
-                *ptr_output_offset++ = pixdata[0];
-                *ptr_output_offset++ = pixdata[1];
 
-                // Then the MS bits (they are in the next 16 bytes of data
-                // Note- do not increment the offset pointer here since the first byte
-                //       of a given tile is two bytes after the previous tile
-                *(ptr_output_offset + SNES_BYTE_GAP_LOHI_PLANES_4BPP)    = pixdata[2];
+                // Save the LSBits two packed bytes
+                *(ptr_output_offset)     = pixdata[0];
+                *(ptr_output_offset + 1) = pixdata[1];
+
+                // Then the MS bits (they are in the next 16 bytes of data)
+                *(ptr_output_offset + SNES_BYTE_GAP_LOHI_PLANES_4BPP) = pixdata[2];
                 *(ptr_output_offset + SNES_BYTE_GAP_LOHI_PLANES_4BPP + 1) = pixdata[3];
+
+                // Advance to next row in tile
+                ptr_output_offset += SNES_BYTE_ROW_INCREMENT_4BPP;
 
             } // End of per-tile encode
 
-            // Now advance to the start of the next tile, which is 16 bytes further
-            // TODO: fix constant definition (make it 16, tidy up other code that uses this)
-            ptr_output_offset += SNES_BYTE_GAP_LOHI_PLANES_4BPP + 2;
+            // Now advance to the start of the next tile
+            // The pointer is in the middle of the current tile (16 of 32 bytes),
+            // so increment by another 16 bytes to get to the start of the next tile
+            ptr_output_offset += SNES_BYTE_GAP_LOHI_PLANES_4BPP;
         }
     }
 
