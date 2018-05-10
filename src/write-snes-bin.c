@@ -75,7 +75,6 @@ int write_snesbin(const gchar * filename, gint drawable_id, int image_mode)
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 
-    // TODO: Encode image data to bin file + output format option/dialog
     status = snesbin_encode_to_indexed(source_image_data,
                                        drawable->width,
                                        drawable->height,

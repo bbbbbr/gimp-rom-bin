@@ -31,7 +31,7 @@ int read_snesbin(const gchar * filename, int image_mode)
     FILE * file;
     long int filesize;
 
-    // TODO : Any reason not to change void* to unsigned char* for ptr_file_data?
+    // TODO : Look into void* vs unsigned char* for ptr_file_data
     void * filedata = NULL;
 
     guchar * image_data = NULL,
@@ -114,8 +114,7 @@ int read_snesbin(const gchar * filename, int image_mode)
 
 
     // Set up the indexed color map
-    // TODO: deprecated API call, Update to gimp_image_set_colormap()
-    gimp_image_set_cmap (new_image_id, color_map_data, color_map_size);
+    gimp_image_set_colormap(new_image_id, color_map_data, color_map_size);
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
