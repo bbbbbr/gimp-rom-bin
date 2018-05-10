@@ -24,6 +24,7 @@ Compile/install it on Unix / Linux using:
 
 * Palettes: Does not yet import palettes and defaults to internal standard palettes. Which can then be changed using the GIMP color map and Palette tools.
 
+* Image size: Image width and height must be even multiples of 8 (the ROM image tile size, 8x8). If they aren't import and export will fail (quietly, for now).
 
 
 ## GIMP usage hints:
