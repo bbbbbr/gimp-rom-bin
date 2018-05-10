@@ -178,9 +178,6 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
 }
 
 
-
-
-
 int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
 {
     unsigned char pixdata[4];
@@ -473,8 +470,6 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     // TODO : consolidate shared code below
     if (SNESBIN_MODE_2BPP == image_mode) {
 
-        printf("Import mode 2bpp\n");
-
         // Allocate the color map buffer
         *color_map_size = DECODED_COLOR_MAP_SIZE_2BPP;
 
@@ -484,12 +479,31 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
         int tiles = file_size / ((TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT)
                                  / (8 / SNES_BITS_PER_PIXEL_2BPP));
 
+        // NOTE: See 4bpp mode regarding width and even multiples of tile count
+
         // * Width: if less than 128 pixels wide worth of
         //          tiles, then use cumulative tile width.
         //          Otherwise default to 128 (8 tiles)
         if ((tiles * TILE_PIXEL_WIDTH) >= IMAGE_WIDTH_DEFAULT) {
-            *ptr_width = IMAGE_WIDTH_DEFAULT;
-        } else {
+
+            // Start at 2 tiles wide
+            *ptr_width = 1;
+
+            // Keep increasing the width as long as it results in
+            // an even multiple of the tiles *and* it's <= 128 pixels wide (the optimal width)
+            while ( ((tiles % ((*ptr_width) * 2)) == 0) &&
+                 ((*ptr_width) * 2 * TILE_PIXEL_WIDTH <= IMAGE_WIDTH_DEFAULT) ) {
+
+                // Use the doubled width if it's still resulting in
+                // an even multiple of the tiles
+                (*ptr_width) *= 2;
+            }
+
+            // Scale the width value up to tile-pixel-size
+            *ptr_width = (*ptr_width * TILE_PIXEL_WIDTH);
+        }
+
+        else {
             *ptr_width = (tiles * TILE_PIXEL_WIDTH);
         }
 
@@ -519,8 +533,6 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
     }
     else if (SNESBIN_MODE_4BPP == image_mode) {
 
-        printf("Import mode 4bpp\n");
-
         // Allocate the color map buffer
         *color_map_size = DECODED_COLOR_MAP_SIZE_4BPP;
 
@@ -530,12 +542,48 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
         int tiles = file_size / ((TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT)
                                  / (8 / SNES_BITS_PER_PIXEL_4BPP));
 
+        // NOTE: If tile count is not an even multiple of IMAGE_WIDTH_DEFAULT
+        //       then the width has to be adjusted to a multiple that works,
+        //       otherwise file loading will fail
+        //       (since the truncated width * heigh * tilesize != file size)
+        //
+        //        Useful reference:
+        //
+        //        * Cannot increase image size by rounding up, because the
+        //          rounded-to-even-tile-rows image size would not match
+        //          then the original image/file size, and it's important to
+        //          be able to write back a file that is the same size as the
+        //          original (if desired).
+        //
+        //        * Partial tile line decode would not work since tiles need to remain 8x8
+        //          and this would require splitting all the partial tiles across a row instead
+        //
+        //        * INDEXEDA_IMAGE and using transparent pixels to indicate non-encoded regions
+        //          might work. Would have to be careful on re-encode to preserve original file size
+
         // * Width: if less than 128 pixels wide worth of
         //          tiles, then use cumulative tile width.
-        //          Otherwise default to 128 (8 tiles)
+        //          Otherwise try to increase it until it reaches
+        //          the default of 128 (8 tiles)
         if ((tiles * TILE_PIXEL_WIDTH) >= IMAGE_WIDTH_DEFAULT) {
-            *ptr_width = IMAGE_WIDTH_DEFAULT;
-        } else {
+
+            // Start at 2 tiles wide
+            *ptr_width = 1;
+
+            // Keep increasing the width as long as it results in
+            // an even multiple of the tiles *and* it's <= 128 pixels wide (the optimal width)
+            while ( ((tiles % ((*ptr_width) * 2)) == 0) &&
+                 ((*ptr_width) * 2 * TILE_PIXEL_WIDTH <= IMAGE_WIDTH_DEFAULT) ) {
+
+                // Use the doubled width if it's still resulting in
+                // an even multiple of the tiles
+                (*ptr_width) *= 2;
+            }
+
+            // Scale the width value up to tile-pixel-size
+            *ptr_width = (*ptr_width * TILE_PIXEL_WIDTH);
+        }
+        else {
             *ptr_width = (tiles * TILE_PIXEL_WIDTH);
         }
 
@@ -543,6 +591,7 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
         //   Round up: Integer rounding up: (x + (n-1)) / n
         *ptr_height = (((tiles * TILE_PIXEL_WIDTH) + (IMAGE_WIDTH_DEFAULT - 1))
                        / IMAGE_WIDTH_DEFAULT);
+
         // Now scale up by the tile height
         *ptr_height *= TILE_PIXEL_HEIGHT;
 
@@ -564,7 +613,6 @@ int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
             return -1;
     }
     else {
-        printf("Import mode note found!\n");
         return -1;
     }
 
@@ -601,8 +649,6 @@ int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_
 
     if (SNESBIN_MODE_2BPP == image_mode) {
 
-        printf("Export 2bpp mode\n");
-
         // Set output file size based on Width, Height and bit packing
         *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP);
 
@@ -623,8 +669,6 @@ int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_
     }
     else if (SNESBIN_MODE_4BPP == image_mode) {
 
-        printf("Export 4bpp mode\n");
-
         // Set output file size based on Width, Height and bit packing
         *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_4BPP);
 
@@ -644,7 +688,6 @@ int snesbin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_
             return -1;
     }
     else {
-            printf("Export mode note found!\n");
             return -1;
     }
 
