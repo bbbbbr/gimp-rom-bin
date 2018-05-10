@@ -163,8 +163,8 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
                     *image_pixel++ = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
 
                     // Upshift bits to prepare for the next pixel
-                    pixdata[0] = pixdata[0] << 1;
-                    pixdata[1] = pixdata[1] << 1;
+                    pixdata[0] <<= 1;
+                    pixdata[1] <<= 1;
                 }
             }
         }
@@ -228,10 +228,10 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
                                      ((pixdata[3] >> 4) & 0x08);
 
                     // Upshift bits to prepare for the next pixel
-                    pixdata[0] = pixdata[0] << 1;
-                    pixdata[1] = pixdata[1] << 1;
-                    pixdata[2] = pixdata[2] << 1;
-                    pixdata[3] = pixdata[3] << 1;
+                    pixdata[0] <<= 1;
+                    pixdata[1] <<= 1;
+                    pixdata[2] <<= 1;
+                    pixdata[3] <<= 1;
                 } // End of tile-row decode loop
 
                 // Increment the pointer to the next row in the tile
