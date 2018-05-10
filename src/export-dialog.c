@@ -49,6 +49,7 @@ void on_response(GtkDialog * dialog,
     GtkWidget * image_mode_combo = data->image_mode_combo;
     gchar *string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(image_mode_combo) );
 
+    // TODO: Using the dialog on import is disabled for now- remove support for import prompting?
     // TODO: convert strings to centralized definition
     // Match the string up to an output mode
     if (!(g_strcmp0(string, "2bpp SNES/GB")))
@@ -136,13 +137,15 @@ int export_dialog(int * image_mode, const gchar * name)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
 
     // Select default value
-    // TODO: try to auto-detect based on number of colors? (export only)
+    // TODO: try to auto-detect image mode based on number of colors? (export only)
     gtk_combo_box_set_active(GTK_COMBO_BOX(image_mode_combo), 0);
 
     // Add it to the box for display and show it
     gtk_box_pack_start(GTK_BOX(vbox), image_mode_combo, FALSE, FALSE, 6);
     gtk_widget_show(image_mode_combo);
 
+
+    // TODO: set Export as default focused button
 
     // Connect the controls to the response signal
     data.response      = &response;

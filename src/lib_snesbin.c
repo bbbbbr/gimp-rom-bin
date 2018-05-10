@@ -43,6 +43,11 @@
 #define TILE_PIXEL_HEIGHT                   8
 
 
+// TODO
+// * ZSNES save state palette loading
+// * Code consolidation and modularization
+
+
 // 2BPP SNES/GBA:
 //
 // * Packed 8x8 Tiles - serial encoded
@@ -114,15 +119,6 @@
 
 
 
-int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data);
-int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data);
-
-int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data);
-
-int snesbin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, unsigned char * ptr_color_map_data, unsigned int * ptr_color_index, int color_map_size);
-int snesbin_load_color_data(unsigned char * ptr_color_map_data, int color_map_size);
-
-
 int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
 {
     unsigned char pixdata[2];
@@ -157,7 +153,6 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
                 pixdata[1] = *((unsigned char *)file_data + (*file_offset)++);
 
                 // Set up the pointer to the pixel in the destination image buffer
-                // TODO: optimize
                 image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
                                           +   (x * TILE_PIXEL_WIDTH));
 
@@ -165,7 +160,6 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
                 for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    // TODO: Is the bit order swapped here? should 0 be LSBit?
                     *image_pixel++ = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
 
                     // Upshift bits to prepare for the next pixel
@@ -181,6 +175,7 @@ int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long 
 }
 
 
+// TODO : can this be merged into the 2bpp code
 int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
 {
     unsigned char pixdata[4];
@@ -220,7 +215,6 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
                 pixdata[3] = *((unsigned char *)file_data + (*file_offset) + SNES_BYTE_GAP_LOHI_PLANES_4BPP + 1);
 
                 // Set up the pointer to the pixel in the destination image buffer
-                // TODO: optimize
                 image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
                                           +   (x * TILE_PIXEL_WIDTH));
 
@@ -228,7 +222,6 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
                 for (int b=0;b < SNES_PIXELS_PER_DWORD_4BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    // TODO: Is the bit order swapped here? should 0 be LSBit?
                     *image_pixel++ = ((pixdata[0] >> 7) & 0x01) |
                                      ((pixdata[1] >> 6) & 0x02) |
                                      ((pixdata[2] >> 5) & 0x04) |
@@ -246,7 +239,6 @@ int snesbin_decode_image_data_4bpp(void * file_data, long int * file_size, long 
             } // End of per-tile decode
 
             // Now advance to the start of the next tile, which is 16 bytes further
-            // TODO: fix constant definition
             *file_offset += SNES_BYTE_GAP_LOHI_PLANES_4BPP;
         }
     }
@@ -275,17 +267,6 @@ int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int so
     if (*ptr_output_size < (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP))
         return -1;
 
-    // 2BPP SNES/GBA:
-    //
-    // * Packed 8x8 Tiles - serial encoded
-    // * 1 Tile row = 2 bytes (byte_lo/0, byte_hi/1)
-    // * Packed Bits: 876543210, 876543210
-    // *              ---------  ---------
-    // * Pixel #    : 012345678  012345678
-    // * Pixel l/h  : LLLLLLLLL  HHHHHHHHH
-    // * So, Pixel 0 = ((byte0 >> 8) & 0x01) | ((byte1 >> 7) & 0x20)
-    // TODO : verify lo/hi byte order
-
     // Un-bitpack the pixels
     // Encode the image top-to-bottom
 
@@ -308,8 +289,6 @@ int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int so
                 for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    // TODO: Is the bit order swapped here? should 0 be LSBit?
-
                     pixdata[0] = (pixdata[0] << 1) |  (*image_pixel & 0x01);
                     pixdata[1] = (pixdata[1] << 1) | ((*image_pixel & 0x02) >> 1);
 
@@ -334,7 +313,7 @@ int snesbin_encode_image_data_4bpp(unsigned char * ptr_source_image_data, int so
 {
     unsigned char pixdata[4];
     unsigned char * image_pixel;
-    unsigned char * ptr_output_offset; // TODO: should this be an int or long int? - i don't think so
+    unsigned char * ptr_output_offset;
 
     // Check incoming buffers & vars
     if ((ptr_source_image_data == NULL) ||
@@ -423,7 +402,6 @@ int snesbin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char 
 }
 
 
-// TODO: handle 2/4NPP separately (4 vs 16 colors)
 // TODO: FEATURE: Consider trying to look for .pal file with name that matches .bin file and load it
 int snesbin_load_color_data(unsigned char * ptr_color_map_data, int color_map_size)
 {
@@ -467,8 +445,6 @@ int snesbin_load_color_data(unsigned char * ptr_color_map_data, int color_map_si
 }
 
 
-// TODO: support loading large image files (AllGFX.bin)
-// TODO: move color map extraction/data out of decode and into a separate function
 int snesbin_decode_to_indexed(void * ptr_file_data, long int file_size, int * ptr_width, int * ptr_height, unsigned char ** ptr_ptr_image_data, unsigned char ** ptr_ptr_color_map_data, int * color_map_size,  int image_mode)
 {
     long int file_offset = 0;
