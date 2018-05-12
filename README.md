@@ -1,7 +1,7 @@
 gimp-snes-bin
 ===========
 
-GIMP plugin for reading/writing SNES ROM bin image files in 2bpp and 4bpp mode.
+GIMP plugin for reading/writing ROM bin image files in SNES 2bpp and 4bpp mode.
 
 
 
@@ -15,7 +15,7 @@ GIMP plugin for reading/writing SNES ROM bin image files in 2bpp and 4bpp mode.
 Compile/install it on Unix / Linux using:
 
 ```
-gimptool-2.0 --install file-snes-binfile.c
+gimptool-2.0 --install file-rom-binfile.c
     or
  make (and then copy to your GIMP plugin folder)
 ```
