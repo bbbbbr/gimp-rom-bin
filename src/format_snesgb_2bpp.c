@@ -95,7 +95,7 @@
 static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
 {
     unsigned char pixdata[2];
-    unsigned char * image_pixel;
+    unsigned char * ptr_image_pixel;
 
     // Check incoming buffers & vars
     if ((file_data      == NULL) ||
@@ -126,14 +126,17 @@ static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size
                 pixdata[1] = *((unsigned char *)file_data + (*file_offset)++);
 
                 // Set up the pointer to the pixel in the destination image buffer
-                image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
-                                          +   (x * TILE_PIXEL_WIDTH));
+                ptr_image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
+                                              +   (x * TILE_PIXEL_WIDTH));
 
                 // Unpack the 8 horizontal pixels
                 for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    *image_pixel++ = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
+                    *ptr_image_pixel = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
+
+                    // Advance to the next pixel
+                    ptr_image_pixel++;
 
                     // Upshift bits to prepare for the next pixel
                     pixdata[0] <<= 1;
@@ -152,7 +155,7 @@ static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size
 static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data)
 {
     unsigned char pixdata[2];
-    unsigned char * image_pixel;
+    unsigned char * ptr_image_pixel;
     unsigned char * ptr_output_offset;
 
     // Check incoming buffers & vars
@@ -181,8 +184,8 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
             for (int ty=0; ty < TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the source image buffer
-                image_pixel = (ptr_source_image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * source_width)
-                                                     +   (x * TILE_PIXEL_WIDTH));
+                ptr_image_pixel = (ptr_source_image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * source_width)
+                                                         +   (x * TILE_PIXEL_WIDTH));
                 pixdata[0] = 0;
                 pixdata[1] = 0;
 
@@ -190,16 +193,16 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
                 for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    pixdata[0] = (pixdata[0] << 1) |  (*image_pixel & 0x01);
-                    pixdata[1] = (pixdata[1] << 1) | ((*image_pixel & 0x02) >> 1);
+                    pixdata[0] = (pixdata[0] << 1) |  ( (*ptr_image_pixel) & 0x01);
+                    pixdata[1] = (pixdata[1] << 1) | (( (*ptr_image_pixel) & 0x02) >> 1);
 
                     // Advance to next pixel
-                    *image_pixel++;
+                    ptr_image_pixel++;
                 }
 
                 // Save the two packed bytes
-                *ptr_output_offset++ = pixdata[0];
-                *ptr_output_offset++ = pixdata[1];
+                *(ptr_output_offset++) = pixdata[0];
+                *(ptr_output_offset++) = pixdata[1];
             }
         }
     }
@@ -214,7 +217,7 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
 static int snesbin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, unsigned char * ptr_color_map_data, unsigned int * ptr_color_index, int color_map_size)
 {
     // Make sure space is available in the buffer
-    if ((*ptr_color_index + 2) > (color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL))
+    if (( (*ptr_color_index) + 2) > (color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL))
         return -1;
 
     ptr_color_map_data[ (*ptr_color_index)++ ] = r;

@@ -115,7 +115,7 @@ printf("Entering decode, passed file size check\n");
 
                 // Set up the pointer to the pixel in the destination image buffer
                 ptr_image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
-                                          +   (x * TILE_PIXEL_WIDTH));
+                                              +   (x * TILE_PIXEL_WIDTH));
 
                 // Unpack the 8 horizontal pixels
                 for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
@@ -135,7 +135,7 @@ printf("Entering decode, passed file size check\n");
             } // End of per-tile decode
 
             // Now advance to the start of the next tile, which is 8 bytes further
-            *file_offset += NES_BYTE_GAP_LOHI_PLANES_2BPP;
+            (*file_offset) += NES_BYTE_GAP_LOHI_PLANES_2BPP;
         }
     }
 
@@ -178,7 +178,7 @@ static int bin_encode_image_data_nes_2bpp(unsigned char * ptr_source_image_data,
 
                 // Set up the pointer to the pixel in the source image buffer
                 ptr_image_pixel = (ptr_source_image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * source_width)
-                                                     +   (x * TILE_PIXEL_WIDTH));
+                                                         +   (x * TILE_PIXEL_WIDTH));
                 pixdata[0] = 0;
                 pixdata[1] = 0;
 
@@ -186,8 +186,8 @@ static int bin_encode_image_data_nes_2bpp(unsigned char * ptr_source_image_data,
                 for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    pixdata[0] = (pixdata[0] << 1) |  (*ptr_image_pixel & 0x01);
-                    pixdata[1] = (pixdata[1] << 1) | ((*ptr_image_pixel & 0x02) >> 1);
+                    pixdata[0] = (pixdata[0] << 1) |  ( (*ptr_image_pixel) & 0x01);
+                    pixdata[1] = (pixdata[1] << 1) | (( (*ptr_image_pixel) & 0x02) >> 1);
 
                     // Advance to next pixel
                     ptr_image_pixel++;
@@ -218,7 +218,7 @@ static int bin_encode_image_data_nes_2bpp(unsigned char * ptr_source_image_data,
 static int bin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, unsigned char * ptr_color_map_data, unsigned int * ptr_color_index, int color_map_size)
 {
     // Make sure space is available in the buffer
-    if ((*ptr_color_index + 2) > (color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL))
+    if (( (*ptr_color_index) + 2) > (color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL))
         return -1;
 
     ptr_color_map_data[ (*ptr_color_index)++ ] = r;

@@ -154,7 +154,7 @@ void query()
     gimp_register_load_handler(LOAD_PROCEDURE_SNESGB_2BPP, "bin", "");
 
     gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "bin", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "bin,chr", "");
     // Additional NES handler for ".chr" format files
     gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/chr");
     gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "chr", "");
