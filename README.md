@@ -1,9 +1,11 @@
-gimp-snes-bin
+gimp-rom-bin
 ===========
 
-GIMP plugin for reading/writing ROM bin image files in SNES 2bpp and 4bpp mode.
-
-
+GIMP plugin for reading/writing ROM bin image files:
+ * NES 2bpp
+ * SNES/GB 2bpp
+ * SNES 4bpp
+ 
 
 ## Acknowledgement:
  * Source uses some webp gimp plugin code from Nathan Osman (Copyright 2012)
@@ -21,7 +23,7 @@ gimptool-2.0 --install file-rom-binfile.c
 ```
 
 ## Known limitations & Issues:
-* Import: Currently set up as two separate registered types (2bpp/4bpp) for .bin files instead of a dialog to select the type on import. This is due to the Open dialog preview using the plugin to generate a thumbnail image, and therefore spawning multiple, unwanted import dialogs.
+* Import: Requires selecting the correct image file format from the Open dialog instead of a pop-up during import. This is due to the Open dialog preview using the plugin to generate a thumbnail image, and therefore spawning multiple, unwanted import dialogs.
 
 * Palettes: Does not yet import palettes and defaults to internal standard palettes. Which can then be changed using the GIMP color map and Palette tools.
 
