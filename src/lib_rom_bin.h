@@ -24,7 +24,7 @@
 //#include <libgimp/gimp.h>
 
 
-enum snesbin_modes {
+enum rom_bin_modes {
     SNESBIN_MODE_2BPP,
     SNESBIN_MODE_4BPP
 };
@@ -32,5 +32,5 @@ enum snesbin_modes {
 
 
 
-int snesbin_decode_to_indexed(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
-int snesbin_encode_to_indexed(unsigned char *, int, int, long int *, unsigned char **, int);
+int rom_bin_decode_to_indexed(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
+int rom_bin_encode_to_indexed(unsigned char *, int, int, long int *, unsigned char **, int);

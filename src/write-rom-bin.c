@@ -16,15 +16,15 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include "write-snes-bin.h"
-#include "lib_snesbin.h"
+#include "write-rom-bin.h"
+#include "lib_rom_bin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int write_snesbin(const gchar * filename, gint drawable_id, int image_mode)
+int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
 {
     int status = 1;
 
@@ -75,7 +75,7 @@ int write_snesbin(const gchar * filename, gint drawable_id, int image_mode)
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 
-    status = snesbin_encode_to_indexed(source_image_data,
+    status = rom_bin_encode_to_indexed(source_image_data,
                                        drawable->width,
                                        drawable->height,
                                        &output_size,

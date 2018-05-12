@@ -21,15 +21,15 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
-#include "lib_snesbin.h"
-#include "read-snes-bin.h"
-#include "write-snes-bin.h"
+#include "lib_rom_bin.h"
+#include "read-rom-bin.h"
+#include "write-rom-bin.h"
 #include "export-dialog.h"
 
 const char LOAD_PROCEDURE_2BPP[] = "file-snes-bin-load-2bpp";
 const char LOAD_PROCEDURE_4BPP[] = "file-snes-bin-load-4bpp";
 const char SAVE_PROCEDURE[] = "file-snes-bin-save";
-const char BINARY_NAME[]    = "file-snes-bin";
+const char BINARY_NAME[]    = "file-rom-bin";
 
 // Predeclare our entrypoints
 void query();
@@ -199,7 +199,7 @@ void run(const gchar * name,
 
 
         // Now read the image
-        new_image_id = read_snesbin(param[1].data.d_string, image_mode);
+        new_image_id = read_rom_bin(param[1].data.d_string, image_mode);
 
         // Check for an error
         if(new_image_id == -1)
@@ -252,7 +252,7 @@ void run(const gchar * name,
                     return;
                 }
 
-                status = write_snesbin(param[3].data.d_string,
+                status = write_rom_bin(param[3].data.d_string,
                                        drawable_id, image_mode);
                 gimp_image_delete(image_id);
 

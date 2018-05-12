@@ -18,4 +18,4 @@
 
 #include <glib.h>
 
-int read_snesbin(const gchar *, int);
+int read_rom_bin(const gchar *, int);

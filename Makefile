@@ -1,6 +1,6 @@
 # Predefined constants
 CC      = gcc
-TARGET  = file-snes-bin
+TARGET  = file-rom-bin
 SRC_DIR = src
 OBJ_DIR = obj
 CFLAGS  = $(shell pkg-config --cflags gtk+-2.0) \

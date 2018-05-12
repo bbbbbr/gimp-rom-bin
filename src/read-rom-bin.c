@@ -16,15 +16,15 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include "read-snes-bin.h"
-#include "lib_snesbin.h"
+#include "read-rom-bin.h"
+#include "lib_rom_bin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int read_snesbin(const gchar * filename, int image_mode)
+int read_rom_bin(const gchar * filename, int image_mode)
 {
     int status = 1;
 
@@ -71,7 +71,7 @@ int read_snesbin(const gchar * filename, int image_mode)
 
 
     // Perform the load procedure and free the raw data.
-    status = snesbin_decode_to_indexed(filedata,
+    status = rom_bin_decode_to_indexed(filedata,
                                        filesize,
                                        &width,
                                        &height,

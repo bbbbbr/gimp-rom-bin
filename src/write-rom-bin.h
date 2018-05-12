@@ -18,4 +18,4 @@
 
 #include <glib.h>
 
-int write_snesbin(const gchar *, gint, int);
+int write_rom_bin(const gchar *, gint, int);
