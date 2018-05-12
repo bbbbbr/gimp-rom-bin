@@ -18,7 +18,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include "lib_snesbin.h"
+#include "lib_rom_bin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
