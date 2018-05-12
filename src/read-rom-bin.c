@@ -1,5 +1,5 @@
 /*=======================================================================
-              SNES bin load / save plugin for the GIMP
+              ROM bin load / save plugin for the GIMP
                  Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify

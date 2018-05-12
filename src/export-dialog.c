@@ -1,5 +1,5 @@
 /*=======================================================================
-              SNES bin load / save plugin for the GIMP
+              ROM bin load / save plugin for the GIMP
                  Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 // TODO: rename to settings-dialog.c/h
 
-#include "lib_snesbin.h"
+#include "lib_rom_bin.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,12 +26,13 @@
 #include <libgimp/gimpui.h>
 
 extern const char SAVE_PROCEDURE[];
-extern const char LOAD_PROCEDURE_2BPP[];
-extern const char LOAD_PROCEDURE_4BPP[];
+extern const char LOAD_PROCEDURE_SNESGB_2BPP[];
+extern const char LOAD_PROCEDURE_NES_2BPP[];
+extern const char LOAD_PROCEDURE_SNES_4BPP[];
 extern const char BINARY_NAME[];
 
 // Response structure
-struct snesbin_data {
+struct rom_bin_data {
     int       * response;
     GtkWidget * image_mode_combo;
     int       * image_mode;
@@ -42,7 +43,7 @@ void on_response(GtkDialog * dialog,
                  gpointer user_data)
 {
     // Read the value of the combo box and store it in user_data
-    struct snesbin_data * data = user_data;
+    struct rom_bin_data * data = user_data;
 
     // Connect to the combo box pointer
     // Then get currently selected string from combo box
@@ -53,9 +54,11 @@ void on_response(GtkDialog * dialog,
     // TODO: convert strings to centralized definition
     // Match the string up to an output mode
     if (!(g_strcmp0(string, "2bpp SNES/GB")))
-        *(data->image_mode) = SNESBIN_MODE_2BPP;
+        *(data->image_mode) = BIN_MODE_SNESGB_2BPP;
+    else if (!(g_strcmp0(string, "2bpp NES")))
+        *(data->image_mode) = BIN_MODE_NES_2BPP;
     else if (!(g_strcmp0(string, "4bpp SNES")))
-        *(data->image_mode) = SNESBIN_MODE_4BPP;
+        *(data->image_mode) = BIN_MODE_SNES_4BPP;
     else
         *(data->image_mode) = -1; //
 
@@ -75,7 +78,7 @@ void on_response(GtkDialog * dialog,
 int export_dialog(int * image_mode, const gchar * name)
 {
     int response = 0;
-    struct snesbin_data data;
+    struct rom_bin_data data;
     GtkWidget * dialog;
     GtkWidget * vbox;
     GtkWidget * label;
@@ -88,14 +91,14 @@ int export_dialog(int * image_mode, const gchar * name)
 
 //    if(!strcmp(name, SAVE_PROCEDURE)) {
         // If Exporting use the export dialog convenience function
-        dialog = gimp_export_dialog_new("SNES bin",
+        dialog = gimp_export_dialog_new("ROM bin",
                                         BINARY_NAME,
                                         SAVE_PROCEDURE);
 /*    }
     else {
 
         // If Opening then make an equivalent dialog
-        gchar     *title  = g_strconcat ("Open Image as ", "SNES bin", NULL);
+        gchar     *title  = g_strconcat ("Open Image as ", "ROM bin", NULL);
 
         dialog = gimp_dialog_new (title, BINARY_NAME,
                                   NULL, 0,
@@ -123,7 +126,7 @@ int export_dialog(int * image_mode, const gchar * name)
     gtk_widget_show(vbox);
 
     // Create the label
-    label = gtk_label_new("The options below allow you to customize\nthe SNES bin image that is created.");
+    label = gtk_label_new("The options below allow you to customize\nthe ROM bin image that is created.");
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 2);
     gtk_widget_show(label);
 
@@ -134,6 +137,7 @@ int export_dialog(int * image_mode, const gchar * name)
     // Add the mode select entries
     // TODO: convert strings to centralized definition
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
 
     // Select default value

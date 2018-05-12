@@ -20,6 +20,7 @@
 
 #include "lib_rom_bin.h"
 #include "format_snesgb_2bpp.h"
+#include "format_nes_2bpp.h"
 #include "format_snespce_4bpp.h"
 
 #include <stdio.h>
@@ -32,7 +33,7 @@
 // TODO: use a structure to pass all these vars
 int rom_bin_decode_to_indexed(void * ptr_file_data, long int file_size, int * ptr_width, int * ptr_height, unsigned char ** ptr_ptr_image_data, unsigned char ** ptr_ptr_color_map_data, int * color_map_size,  int image_mode)
 {
-    if (SNESBIN_MODE_2BPP == image_mode) {
+    if (BIN_MODE_SNESGB_2BPP == image_mode) {
 
         if (0 != snesbin_decode_to_indexed_snesgb_2bpp(ptr_file_data,
                                                        file_size,
@@ -44,7 +45,19 @@ int rom_bin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
                                                        image_mode))
             return -1;
     }
-    else if (SNESBIN_MODE_4BPP == image_mode) {
+    else if (BIN_MODE_NES_2BPP == image_mode) {
+
+        if (0 != bin_decode_to_indexed_nes_2bpp(ptr_file_data,
+                                                file_size,
+                                                ptr_width,
+                                                ptr_height,
+                                                ptr_ptr_image_data,
+                                                ptr_ptr_color_map_data,
+                                                color_map_size,
+                                                image_mode))
+            return -1;
+    }
+    else if (BIN_MODE_SNES_4BPP == image_mode) {
 
         if (0 != snesbin_decode_to_indexed_snes_4bpp(ptr_file_data,
                                                        file_size,
@@ -68,7 +81,7 @@ int rom_bin_decode_to_indexed(void * ptr_file_data, long int file_size, int * pt
 
 int rom_bin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data, int image_mode)
 {
-    if (SNESBIN_MODE_2BPP == image_mode) {
+    if (BIN_MODE_SNESGB_2BPP == image_mode) {
 
         if (0 != snesbin_encode_to_indexed_snesgb_2bpp(ptr_source_image_data,
                                                        source_width,
@@ -78,7 +91,17 @@ int rom_bin_encode_to_indexed(unsigned char * ptr_source_image_data, int source_
                                                        image_mode))
             return -1;
     }
-    else if (SNESBIN_MODE_4BPP == image_mode) {
+    else if (BIN_MODE_NES_2BPP == image_mode) {
+
+        if (0 != bin_encode_to_indexed_nes_2bpp(ptr_source_image_data,
+                                                source_width,
+                                                source_height,
+                                                ptr_output_size,
+                                                ptr_ptr_output_data,
+                                                image_mode))
+            return -1;
+    }
+    else if (BIN_MODE_SNES_4BPP == image_mode) {
 
         if (0 != snesbin_encode_to_indexed_snes_4bpp(ptr_source_image_data,
                                                      source_width,

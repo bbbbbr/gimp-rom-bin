@@ -1,5 +1,5 @@
 /*=======================================================================
-              SNES bin load / save plugin for the GIMP
+              ROM bin load / save plugin for the GIMP
                  Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify
@@ -26,9 +26,10 @@
 #include "write-rom-bin.h"
 #include "export-dialog.h"
 
-const char LOAD_PROCEDURE_2BPP[] = "file-snes-bin-load-2bpp";
-const char LOAD_PROCEDURE_4BPP[] = "file-snes-bin-load-4bpp";
-const char SAVE_PROCEDURE[] = "file-snes-bin-save";
+const char LOAD_PROCEDURE_SNESGB_2BPP[] = "file-snes-bin-load-2bpp";
+const char LOAD_PROCEDURE_NES_2BPP[] = "file-nes-bin-load-2bpp";
+const char LOAD_PROCEDURE_SNES_4BPP[] = "file-snes-bin-load-4bpp";
+const char SAVE_PROCEDURE[] = "file-rom-bin-save";
 const char BINARY_NAME[]    = "file-rom-bin";
 
 // Predeclare our entrypoints
@@ -70,11 +71,11 @@ void query()
         { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
         { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
         { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-        { GIMP_PDB_FLOAT,    "image_mode",  "SNES image format" }
+        { GIMP_PDB_FLOAT,    "image_mode",  "ROM image format" }
     };
 
     // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE_2BPP,
+    gimp_install_procedure(LOAD_PROCEDURE_SNESGB_2BPP,
                            "Loads images in the SNES bin 2-bpp file format",
                            "Loads images in the SNES bin 2-bpp file format",
                            "Others & Nathan Osman (webp plugin base)",
@@ -89,7 +90,22 @@ void query()
                            load_return_values);
 
     // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE_4BPP,
+    gimp_install_procedure(LOAD_PROCEDURE_NES_2BPP,
+                           "Loads images in the NES bin 2-bpp file format",
+                           "Loads images in the NES bin 2-bpp file format",
+                           "Others & Nathan Osman (webp plugin base)",
+                           "Copyright Others & Nathan Osman (webp plugin base)",
+                           "2018",
+                           "NES bin image 2-bpp",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+    // Install the load procedure
+    gimp_install_procedure(LOAD_PROCEDURE_SNES_4BPP,
                            "Loads images in the SNES bin 4-bpp file format",
                            "Loads images in the SNES bin 4-bpp file format",
                            "Others & Nathan Osman (webp plugin base)",
@@ -105,12 +121,12 @@ void query()
 
     // Install the save procedure
     gimp_install_procedure(SAVE_PROCEDURE,
-                           "Saves files in the SNES bin image format",
-                           "Saves files in the SNES bin image format",
+                           "Saves files in the ROM bin image format",
+                           "Saves files in the ROM bin image format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "SNES bin image",
+                           "ROM bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -134,15 +150,26 @@ void query()
     //       See: gimp_thumbnail_update_thumb, gimp/libgimpthumb/gimpthumbnail.c
     //            gimp/app/pdb/fileops-cmds.c, gimp/app/plug-in/gimpplugin.h
 
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_2BPP, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE_2BPP, "bin", "");
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_SNESGB_2BPP, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE_SNESGB_2BPP, "bin", "");
 
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_4BPP, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE_4BPP, "bin", "");
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "bin", "");
+    // Additional NES handler for ".chr" format files
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/chr");
+    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "chr", "");
+
+
+    gimp_register_file_handler_mime(LOAD_PROCEDURE_SNES_4BPP, "image/bin");
+    gimp_register_load_handler(LOAD_PROCEDURE_SNES_4BPP, "bin", "");
 
     // Now register the save handlers
     gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
     gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
+
+    // Additional NES handler for ".chr" format files
+    gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/chr");
+    gimp_register_save_handler(SAVE_PROCEDURE, "chr", "");
 }
 
 // The run function
@@ -163,7 +190,9 @@ void run(const gchar * name,
 
 
     // Check to see if this is the load procedure
-    if( !strcmp(name, LOAD_PROCEDURE_2BPP) || !strcmp(name, LOAD_PROCEDURE_4BPP) )
+    if( !strcmp(name, LOAD_PROCEDURE_SNESGB_2BPP) ||
+        !strcmp(name, LOAD_PROCEDURE_NES_2BPP) ||
+        !strcmp(name, LOAD_PROCEDURE_SNES_4BPP) )
     {
         int new_image_id;
         int image_mode = -1;
@@ -191,11 +220,14 @@ void run(const gchar * name,
         // }
 
         // This is the workaround for the thumbnail/preview dialog spawn problem
-        if(!strcmp(name, LOAD_PROCEDURE_2BPP))
-          image_mode = SNESBIN_MODE_2BPP;
+        if(!strcmp(name, LOAD_PROCEDURE_SNESGB_2BPP))
+          image_mode = BIN_MODE_SNESGB_2BPP;
 
-        else if (!strcmp(name, LOAD_PROCEDURE_4BPP))
-          image_mode = SNESBIN_MODE_4BPP;
+        else if(!strcmp(name, LOAD_PROCEDURE_NES_2BPP))
+          image_mode = BIN_MODE_NES_2BPP;
+
+        else if (!strcmp(name, LOAD_PROCEDURE_SNES_4BPP))
+          image_mode = BIN_MODE_SNES_4BPP;
 
 
         // Now read the image

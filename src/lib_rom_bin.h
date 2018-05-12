@@ -24,9 +24,11 @@
 //#include <libgimp/gimp.h>
 
 
+// TODO: update naming convention
 enum rom_bin_modes {
-    SNESBIN_MODE_2BPP,
-    SNESBIN_MODE_4BPP
+    BIN_MODE_SNESGB_2BPP,
+    BIN_MODE_NES_2BPP,
+    BIN_MODE_SNES_4BPP
 };
 
 

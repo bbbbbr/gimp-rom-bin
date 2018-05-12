@@ -28,8 +28,9 @@
 
 #define IMAGE_WIDTH_DEFAULT                 128
 
-#define SNES_BITS_PER_PIXEL_2BPP            2    // 2 bits per pixel mode
-#define SNES_PIXELS_PER_WORD_2BPP           8    // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo...hi byte)
+#define NES_BITS_PER_PIXEL_2BPP            2    // 2 bits per pixel mode
+#define NES_PIXELS_PER_WORD_2BPP           8    // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo...hi byte)
+#define NES_BYTE_GAP_LOHI_PLANES_2BPP      8    // In 2bpp mode there is an 8 byte offset between the Low and High bytes
 
 #define DECODED_IMAGE_BYTES_PER_PIXEL       1    // 1 byte per pixel in indexed color mode
 #define DECODED_COLOR_MAP_SIZE_2BPP         4
@@ -38,21 +39,6 @@
 #define TILE_PIXEL_HEIGHT                   8
 
 
-// TODO
-// * ZSNES save state palette loading
-// * Code consolidation and modularization
-
-
-// 2BPP SNES/GBA:
-//
-// * Packed 8x8 Tiles - serial encoded
-// * 1 Tile row = 2 bytes (byte_lo/0, byte_hi/1)
-// * Packed Bits: 876543210, 876543210
-// *              ---------  ---------
-// * Pixel #    : 012345678  012345678
-// * Pixel l/h  : LLLLLLLLL  HHHHHHHHH
-// * So, Pixel 0 = ((byte0 >> 8) & 0x01) | ((byte1 >> 7) & 0x20)
-//
 //
 //
 // https://mrclick.zophar.net/TilEd/download/consolegfx.txt
@@ -73,7 +59,7 @@
 //
 // -------------------------------------------------
 //
-// 4. 2BPP SNES/Gameboy/GBC
+// 3.  2BPP NES
 //   Colors Per Tile - 0-3
 //   Space Used - 2 bits per pixel.  16 bytes per 8x8 tile.
 //
@@ -81,21 +67,21 @@
 //   Each pair represents one byte
 //   Format:
 //
-//  **** Starred bytes form the first tile row
 //
-//   *[r0, bp1]*, *[r0, bp2]*, [r1, bp1], [r1, bp2], [r2, bp1], [r2, bp2], [r3, bp1], [r3, bp2]
-//    [r4, bp1],   [r4, bp2],  [r5, bp1], [r5, bp2], [r6, bp1], [r6, bp2], [r7, bp1], [r7, bp2]
+//   *[r0, bp1]*, [r1, bp1], [r2, bp1], [r3, bp1], [r4, bp1], [r5, bp1], [r6, bp1], [r7, bp1]
+//   *[r0, bp2]*, [r1, bp2], [r2, bp2], [r3, bp2], [r4, bp2], [r5, bp2], [r6, bp2], [r7, bp2]
 //
 //   Short Description:
 //
-//   Bitplanes 1 and 2 are intertwined row by row.
+//   Bitplane 1 is stored row by row and then bitplane 2 is stored row by row.
 //
 
 
-static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
+// TODO: why is file_offset being passed in?
+static int bin_decode_image_data_nes_2bpp(void * file_data, long int * file_size, long int *file_offset, int width, int height, unsigned char * image_data)
 {
     unsigned char pixdata[2];
-    unsigned char * image_pixel;
+    unsigned char * ptr_image_pixel;
 
     // Check incoming buffers & vars
     if ((file_data      == NULL) ||
@@ -108,9 +94,10 @@ static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size
     // Make sure there is enough image data
     // then copy it into the image buffer
     // File size is a function of bits per pixel, width and height
-    if (*file_size < ((width / (8 / SNES_BITS_PER_PIXEL_2BPP)) * height))
+    if (*file_size < ((width / (8 / NES_BITS_PER_PIXEL_2BPP)) * height))
         return -1;
 
+printf("Entering decode, passed file size check\n");
 
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
@@ -121,25 +108,34 @@ static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size
         for (int x=0; x < (width / TILE_PIXEL_WIDTH); x++) {
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < TILE_PIXEL_HEIGHT; ty++) {
+
                 // Read two bytes and unpack the 8 horizontal pixels
-                pixdata[0] = *((unsigned char *)file_data + (*file_offset)++);
-                pixdata[1] = *((unsigned char *)file_data + (*file_offset)++);
+                pixdata[0] = *((unsigned char *)file_data + (*file_offset));
+                pixdata[1] = *((unsigned char *)file_data + (*file_offset) + NES_BYTE_GAP_LOHI_PLANES_2BPP);
 
                 // Set up the pointer to the pixel in the destination image buffer
-                image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
+                ptr_image_pixel = (image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * width)
                                           +   (x * TILE_PIXEL_WIDTH));
 
                 // Unpack the 8 horizontal pixels
-                for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
+                for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
+                    // pixel[0].n = b.0, pixel[1].n = b.1
+                    *ptr_image_pixel = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
 
-                    // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    *image_pixel++ = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
+                    // Advance to the next pixel
+                    ptr_image_pixel++;
 
                     // Upshift bits to prepare for the next pixel
                     pixdata[0] <<= 1;
                     pixdata[1] <<= 1;
                 }
-            }
+
+                // Increment the pointer to the next row in the tile
+                (*file_offset)++;
+            } // End of per-tile decode
+
+            // Now advance to the start of the next tile, which is 8 bytes further
+            *file_offset += NES_BYTE_GAP_LOHI_PLANES_2BPP;
         }
     }
 
@@ -149,10 +145,10 @@ static int snesbin_decode_image_data_2bpp(void * file_data, long int * file_size
 
 
 
-static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data)
+static int bin_encode_image_data_nes_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data)
 {
     unsigned char pixdata[2];
-    unsigned char * image_pixel;
+    unsigned char * ptr_image_pixel;
     unsigned char * ptr_output_offset;
 
     // Check incoming buffers & vars
@@ -165,7 +161,7 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
 
 
     // Make sure there is enough size in the output buffer
-    if (*ptr_output_size < (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP))
+    if (*ptr_output_size < (source_width * source_height) / (8 / NES_BITS_PER_PIXEL_2BPP))
         return -1;
 
     // Un-bitpack the pixels
@@ -181,26 +177,34 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
             for (int ty=0; ty < TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the source image buffer
-                image_pixel = (ptr_source_image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * source_width)
+                ptr_image_pixel = (ptr_source_image_data + (((y * TILE_PIXEL_HEIGHT) + ty) * source_width)
                                                      +   (x * TILE_PIXEL_WIDTH));
                 pixdata[0] = 0;
                 pixdata[1] = 0;
 
                 // Read in and pack 8 horizontal pixels into two bytes
-                for (int b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
+                for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    pixdata[0] = (pixdata[0] << 1) |  (*image_pixel & 0x01);
-                    pixdata[1] = (pixdata[1] << 1) | ((*image_pixel & 0x02) >> 1);
+                    pixdata[0] = (pixdata[0] << 1) |  (*ptr_image_pixel & 0x01);
+                    pixdata[1] = (pixdata[1] << 1) | ((*ptr_image_pixel & 0x02) >> 1);
 
                     // Advance to next pixel
-                    *image_pixel++;
+                    ptr_image_pixel++;
                 }
 
-                // Save the two packed bytes
-                *ptr_output_offset++ = pixdata[0];
-                *ptr_output_offset++ = pixdata[1];
+                // Save the two packed bytes. LS Bits then MS Bits (MS Bits are 8 bytes later)
+                *(ptr_output_offset) = pixdata[0];
+                *(ptr_output_offset + NES_BYTE_GAP_LOHI_PLANES_2BPP) = pixdata[1];
+
+                // Advance to next row in the tile
+                ptr_output_offset++;
             }
+
+            // Now advance to the start of the next tile
+            // The pointer is in the middle of the current tile (8 of 16 bytes),
+            // so increment by another 8 bytes to get to the start of the next tile
+            ptr_output_offset += NES_BYTE_GAP_LOHI_PLANES_2BPP;
         }
     }
 
@@ -211,7 +215,7 @@ static int snesbin_encode_image_data_2bpp(unsigned char * ptr_source_image_data,
 
 
 // TODO: Centralize
-static int snesbin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, unsigned char * ptr_color_map_data, unsigned int * ptr_color_index, int color_map_size)
+static int bin_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, unsigned char * ptr_color_map_data, unsigned int * ptr_color_index, int color_map_size)
 {
     // Make sure space is available in the buffer
     if ((*ptr_color_index + 2) > (color_map_size * DECODED_COLOR_MAP_BYTES_PER_PIXEL))
@@ -227,7 +231,7 @@ static int snesbin_insert_color_to_map(unsigned char r, unsigned char g, unsigne
 
 
 // TODO: FEATURE: Consider trying to look for .pal file with name that matches .bin file and load it
-static int snesbin_load_color_data_2bpp(unsigned char * ptr_color_map_data, int color_map_size)
+static int bin_load_color_data_nes_2bpp(unsigned char * ptr_color_map_data, int color_map_size)
 {
     int status = 0;
     unsigned int color_index = 0;
@@ -237,10 +241,10 @@ static int snesbin_load_color_data_2bpp(unsigned char * ptr_color_map_data, int 
         return -1;
 
     // 2BPP Default
-    status += snesbin_insert_color_to_map(0x00, 0x00, 0x00, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0x8c, 0x63, 0x21, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xAD, 0xB5, 0x31, ptr_color_map_data, &color_index, color_map_size);
-    status += snesbin_insert_color_to_map(0xC6, 0xE7, 0x9C, ptr_color_map_data, &color_index, color_map_size);
+    status += bin_insert_color_to_map(0x00, 0x00, 0x00, ptr_color_map_data, &color_index, color_map_size);
+    status += bin_insert_color_to_map(0x8c, 0x63, 0x21, ptr_color_map_data, &color_index, color_map_size);
+    status += bin_insert_color_to_map(0xAD, 0xB5, 0x31, ptr_color_map_data, &color_index, color_map_size);
+    status += bin_insert_color_to_map(0xC6, 0xE7, 0x9C, ptr_color_map_data, &color_index, color_map_size);
 
     // Check if an error occurred
     if (0 != status)
@@ -251,19 +255,18 @@ static int snesbin_load_color_data_2bpp(unsigned char * ptr_color_map_data, int 
 }
 
 
-int snesbin_decode_to_indexed_snesgb_2bpp(void * ptr_file_data, long int file_size, int * ptr_width, int * ptr_height, unsigned char ** ptr_ptr_image_data, unsigned char ** ptr_ptr_color_map_data, int * color_map_size,  int image_mode)
+int bin_decode_to_indexed_nes_2bpp(void * ptr_file_data, long int file_size, int * ptr_width, int * ptr_height, unsigned char ** ptr_ptr_image_data, unsigned char ** ptr_ptr_color_map_data, int * color_map_size,  int image_mode)
 {
     long int file_offset = 0;
 
+    printf("Entering NES 2bpp decode\n");
 
     // TODO: move tile, width, height into a function
 
     // Set Width & Height
     // Tiles are 8x8 pixels. Calculate size factoring in bit-packing.
     int tiles = file_size / ((TILE_PIXEL_WIDTH * TILE_PIXEL_HEIGHT)
-                             / (8 / SNES_BITS_PER_PIXEL_2BPP));
-
-    // NOTE: See SNES 4bpp mode regarding width and even multiples of tile count
+                             / (8 / NES_BITS_PER_PIXEL_2BPP));
 
     // * Width: if less than 128 pixels wide worth of
     //          tiles, then use cumulative tile width.
@@ -306,15 +309,16 @@ int snesbin_decode_to_indexed_snesgb_2bpp(void * ptr_file_data, long int file_si
         return -1;
 
 
+printf("w=%d, h=%d, t=%d, fs=%ld, ibs=%d \n",*ptr_width, *ptr_height, tiles, file_size, *ptr_width * *ptr_height);
+
     // Read the image data
-    if (0 != snesbin_decode_image_data_2bpp(ptr_file_data,
+    if (0 != bin_decode_image_data_nes_2bpp(ptr_file_data,
                                             &file_size,
                                             &file_offset,
                                             *ptr_width,
                                             *ptr_height,
                                             *ptr_ptr_image_data))
         return -1;
-
 
 
     // Allocate the color map buffer
@@ -327,8 +331,10 @@ int snesbin_decode_to_indexed_snesgb_2bpp(void * ptr_file_data, long int file_si
     if(*ptr_ptr_color_map_data == NULL)
         return -1;
 
+printf("colors=%d\n", *color_map_size);
+
     // Read the color map data
-    if (0 != snesbin_load_color_data_2bpp(*ptr_ptr_color_map_data, *color_map_size))
+    if (0 != bin_load_color_data_nes_2bpp(*ptr_ptr_color_map_data, *color_map_size))
         return -1;
 
 
@@ -337,12 +343,12 @@ int snesbin_decode_to_indexed_snesgb_2bpp(void * ptr_file_data, long int file_si
 }
 
 
-int snesbin_encode_to_indexed_snesgb_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data, int image_mode)
+int bin_encode_to_indexed_nes_2bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data, int image_mode)
 {
     // TODO: Warn if number of colors > 4
 
     // Set output file size based on Width, Height and bit packing
-    *ptr_output_size = (source_width * source_height) / (8 / SNES_BITS_PER_PIXEL_2BPP);
+    *ptr_output_size = (source_width * source_height) / (8 / NES_BITS_PER_PIXEL_2BPP);
 
     *ptr_ptr_output_data = malloc(*ptr_output_size);
 
@@ -352,7 +358,7 @@ int snesbin_encode_to_indexed_snesgb_2bpp(unsigned char * ptr_source_image_data,
 
 
     // Encode the image data
-    if (0 != snesbin_encode_image_data_2bpp(ptr_source_image_data,
+    if (0 != bin_encode_image_data_nes_2bpp(ptr_source_image_data,
                                             source_width,
                                             source_height,
                                             ptr_output_size,

@@ -1,6 +1,8 @@
 /*=======================================================================
               ROM bin load / save plugin for the GIMP
-                 Copyright 2018 - Others & Nathan Osman (webp plugin base)
+                 Copyright 2018 - X
+
+                 Useful : https://www.rpi.edu/dept/acm/packages/gimp/gimp-1.2.3/plug-ins/common/pcx.c
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -16,6 +18,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include <glib.h>
 
-int write_rom_bin(const gchar *, gint, int);
+int bin_decode_to_indexed_nes_2bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
+int bin_encode_to_indexed_nes_2bpp(unsigned char *, int, int, long int *, unsigned char **, int);
