@@ -1,7 +1,7 @@
 gimp-rom-bin
 ===========
 
-GIMP plugin for reading/writing ROM bin image files:
+GIMP plugin for reading/writing ROM bin image (tile) files:
  * NES 2bpp
  * SNES/GB 2bpp
  * SNES 4bpp
