@@ -16,6 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
+
 #include <string.h>
 #include <stdint.h>
 #include <libgimp/gimp.h>
@@ -26,11 +27,12 @@
 #include "write-rom-bin.h"
 #include "export-dialog.h"
 
-const char LOAD_PROCEDURE_SNESGB_2BPP[] = "file-snes-bin-load-2bpp";
-const char LOAD_PROCEDURE_NES_2BPP[] = "file-nes-bin-load-2bpp";
-const char LOAD_PROCEDURE_SNES_4BPP[] = "file-snes-bin-load-4bpp";
+const char LOAD_PROCEDURE[] = "file-rom-bin-load";
+const char LOAD_PROCEDURE_NES_2BPP_CHR[] = "file-bin-bin-load-nes-2bpp-chr";
+
 const char SAVE_PROCEDURE[]        = "file-rom-bin-save";
 const char SAVE_PROCEDURE_NES_2BPP_CHR[] = "file-rom-bin-save-nes-2bpp-chr";
+
 const char BINARY_NAME[]    = "file-rom-bin";
 
 // Predeclare our entrypoints
@@ -75,14 +77,14 @@ void query()
         { GIMP_PDB_FLOAT,    "image_mode",  "ROM image format" }
     };
 
-    // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE_SNESGB_2BPP,
-                           "Loads images in the SNES bin 2-bpp file format",
-                           "Loads images in the SNES bin 2-bpp file format",
+    // Install the load procedure for ".bin" files (all formats)
+    gimp_install_procedure(LOAD_PROCEDURE,
+                           "Loads images in the ROM bin file format",
+                           "Loads images in the ROM bin file format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM SNES bin image 2-bpp",
+                           "ROM SNES/NES/GB bin image",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -90,14 +92,14 @@ void query()
                            load_arguments,
                            load_return_values);
 
-    // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE_NES_2BPP,
-                           "Loads images in the NES bin 2-bpp file format",
-                           "Loads images in the NES bin 2-bpp file format",
+    // Install the load procedure for ".chr" files (only NES chr 2bpp)
+    gimp_install_procedure(LOAD_PROCEDURE_NES_2BPP_CHR,
+                           "Loads images in the NES chr 2-bpp file format",
+                           "Loads images in the NES chr 2-bpp file format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM x NES bin image 2-bpp",
+                           "ROM NES chr image 2-bpp",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -105,29 +107,15 @@ void query()
                            load_arguments,
                            load_return_values);
 
-    // Install the load procedure
-    gimp_install_procedure(LOAD_PROCEDURE_SNES_4BPP,
-                           "Loads images in the SNES bin 4-bpp file format",
-                           "Loads images in the SNES bin 4-bpp file format",
-                           "Others & Nathan Osman (webp plugin base)",
-                           "Copyright Others & Nathan Osman (webp plugin base)",
-                           "2018",
-                           "ROM SNES bin image 4-bpp",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
 
-    // Install the save procedure
+    // Install the save procedure for ".bin" files (all formats)
     gimp_install_procedure(SAVE_PROCEDURE,
                            "Saves files in the ROM bin image format",
                            "Saves files in the ROM bin image format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM bin image",
+                           "ROM SNES/NES/GB bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -135,14 +123,14 @@ void query()
                            save_arguments,
                            NULL);
 
-    // Install the save procedure
+    // Install the save procedure for ".chr" files (only NES chr 2bpp)
     gimp_install_procedure(SAVE_PROCEDURE_NES_2BPP_CHR,
-                           "Saves files in the ROM chr image format",
-                           "Saves files in the ROM chr image format",
+                           "Saves files in the NES chr 2-bpp image format",
+                           "Saves files in the NES chr 2-bpp image format",
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM bin image",
+                           "CHR NES 2bpp bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -151,40 +139,23 @@ void query()
                            NULL);
 
     // Register the load handlers
-
-    // TODO: PROBLEM/WORKAROUND-
-    //       * LOAD gets called to generate a thumbnail for an
-    //         image when browsing in the open dialog. This spawns
-    //         lots of unwanted 2/4bpp dialogs.
-    //
-    //       * For now: use separate 2/4bpp load handlers
-    //
-    //       * Other workaround: could register a dummy handler with no preview or
-    //         non-dialog preview
-    //       * Future fix? find a way to suppress the dialog or thumbnail previews
-    //
-    //       See: gimp_thumbnail_update_thumb, gimp/libgimpthumb/gimpthumbnail.c
-    //            gimp/app/pdb/fileops-cmds.c, gimp/app/plug-in/gimpplugin.h
-
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_SNESGB_2BPP, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE_SNESGB_2BPP, "bin", "");
+    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
 
     // Additional NES handler for ".chr" format files
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/bin");
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/chr");
-    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP, "bin,chr", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP_CHR, "chr", "");
 
-
-    gimp_register_file_handler_mime(LOAD_PROCEDURE_SNES_4BPP, "image/bin");
-    gimp_register_load_handler(LOAD_PROCEDURE_SNES_4BPP, "bin", "");
 
     // Now register the save handlers
-    gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
     gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
 
     // Additional NES handler for ".chr" format files
-    gimp_register_file_handler_mime(SAVE_PROCEDURE_NES_2BPP_CHR, "image/chr");
     gimp_register_save_handler(SAVE_PROCEDURE_NES_2BPP_CHR, "chr", "");
+
+    // MIME handler registration is disabled for now, due to non-interactive
+    //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
+    //gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/chr");
+    //gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
+    //gimp_register_file_handler_mime(SAVE_PROCEDURE_NES_2BPP_CHR, "image/chr");
 }
 
 // The run function
@@ -199,22 +170,23 @@ void run(const gchar * name,
     *nreturn_vals = 1;
     *return_vals  = return_values;
 
+    GimpRunMode   run_mode;
+    run_mode      = param[0].data.d_int32;
+
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
 
     // Check to see if this is the load procedure
-    if( !strcmp(name, LOAD_PROCEDURE_SNESGB_2BPP) ||
-        !strcmp(name, LOAD_PROCEDURE_NES_2BPP) ||
-        !strcmp(name, LOAD_PROCEDURE_SNES_4BPP) )
+    if( !strcmp(name, LOAD_PROCEDURE) ||
+        !strcmp(name, LOAD_PROCEDURE_NES_2BPP_CHR))
     {
         int new_image_id;
         int image_mode = -1;
 
         // Check to make sure all parameters were supplied
-        if(nparams != 3)
-        {
+        if(nparams != 3) {
             return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
             return;
         }
@@ -223,26 +195,31 @@ void run(const gchar * name,
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
 
-        // Get the settings
-        // TODO: PROBLEM
-        //       * LOAD gets called to generate a thumbnail for an
-        //         image when browsing in the open dialog. This spawns
-        //         lots of unwanted 2/4bpp dialogs.
-        // if(!export_dialog(&image_mode, name))
-        // {
-        //     return_values[0].data.d_status = GIMP_PDB_CANCEL;
-        //     return;
-        // }
 
-        // This is the workaround for the thumbnail/preview dialog spawn problem
-        if(!strcmp(name, LOAD_PROCEDURE_SNESGB_2BPP))
-          image_mode = BIN_MODE_SNESGB_2BPP;
+        // Determine image file format, by load type or user dialog
+        // * .chr files auto-default to NES 2bpp,
+        //   no need to show image format selection dialog
+        if(!strcmp(name, LOAD_PROCEDURE_NES_2BPP_CHR))
+            image_mode = BIN_MODE_NES_2BPP;
+        else {
+            // Only show settings dialog during interactive mode
+            // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
+            // - TODO: GIMP_RUN_WITH_LAST_VALS
+            // - TODO: default SNES 4bpp for non-interactive?
+            if (GIMP_RUN_INTERACTIVE == run_mode) {
 
-        else if(!strcmp(name, LOAD_PROCEDURE_NES_2BPP))
-          image_mode = BIN_MODE_NES_2BPP;
+                // Show the import/export dialog
+                if(!export_dialog(&image_mode, name)) {
+                    return_values[0].data.d_status = GIMP_PDB_CANCEL;
+                    return;
+                }
+            }
+            else if (GIMP_RUN_NONINTERACTIVE == run_mode) {
 
-        else if (!strcmp(name, LOAD_PROCEDURE_SNES_4BPP))
-          image_mode = BIN_MODE_SNES_4BPP;
+                // Default to SNES 4bpp for non-interactive mode
+                image_mode = BIN_MODE_SNES_4BPP;
+            }
+        }
 
 
         // Now read the image
