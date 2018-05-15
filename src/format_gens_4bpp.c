@@ -72,10 +72,16 @@
 //   Each pair represents one byte
 //   Format:
 //
-//   [p1-2 r0: bp*], [p2-3 r0: bp*], [p4-5 r1: bp*], [p6-7 r1: bp*]
-//   [p1-2 r2: bp*], [p2-3 r2: bp*], [p4-5 r3: bp*], [p6-7 r3: bp*]
-//   [p1-2 r4: bp*], [p2-3 r4: bp*], [p4-5 r5: bp*], [p6-7 r5: bp*]
-//   [p1-2 r6: bp*], [p2-3 r6: bp*], [p4-5 r7: bp*], [p6-7 r7: bp*]
+//   Bits 7..4 = p0, 3..0 = p1 / etc
+//
+//   [p0-1 r0: bp*], [p2-3 r0: bp*], [p4-5 r0: bp*], [p6-7 r0: bp*]
+//   [p0-1 r1: bp*], [p2-3 r1: bp*], [p4-5 r1: bp*], [p6-7 r1: bp*]
+//   [p0-1 r2: bp*], [p2-3 r2: bp*], [p4-5 r2: bp*], [p6-7 r2: bp*]
+//   [p0-1 r3: bp*], [p2-3 r3: bp*], [p4-5 r3: bp*], [p6-7 r3: bp*]
+//   [p0-1 r4: bp*], [p2-3 r4: bp*], [p4-5 r4: bp*], [p6-7 r4: bp*]
+//   [p0-1 r5: bp*], [p2-3 r5: bp*], [p4-5 r5: bp*], [p6-7 r5: bp*]
+//   [p0-1 r6: bp*], [p2-3 r6: bp*], [p4-5 r6: bp*], [p6-7 r6: bp*]
+//   [p0-1 r7: bp*], [p2-3 r7: bp*], [p4-5 r7: bp*], [p6-7 r7: bp*]
 //
 //   Short Description:
 //
