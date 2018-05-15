@@ -1,6 +1,8 @@
 /*=======================================================================
-              YY-CHR load / save plugin for the GIMP
+              SNES bin load / save plugin for the GIMP
                  Copyright 2018 - X
+
+                 Useful : https://www.rpi.edu/dept/acm/packages/gimp/gimp-1.2.3/plug-ins/common/pcx.c
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -16,25 +18,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include <glib.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-//#include <libgimp/gimp.h>
-
-
-// TODO: update naming convention
-enum rom_bin_modes {
-    BIN_MODE_NES_1BPP,
-    BIN_MODE_NES_2BPP,
-    BIN_MODE_SNESGB_2BPP,
-    BIN_MODE_SNES_4BPP,
-    BIN_MODE_GENS_4BPP,
-};
-
-
-
-
-int rom_bin_decode_to_indexed(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
-int rom_bin_encode_to_indexed(unsigned char *, int, int, long int *, unsigned char **, int);
+int snesbin_decode_to_indexed_gens_4bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
+int snesbin_encode_to_indexed_gens_4bpp(unsigned char *, int, int, long int *, unsigned char **, int);

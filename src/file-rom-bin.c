@@ -84,7 +84,7 @@ void query()
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM SNES/NES/GB bin image",
+                           "ROM GEN/SNES/NES/GB bin image",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -115,7 +115,7 @@ void query()
                            "Others & Nathan Osman (webp plugin base)",
                            "Copyright Others & Nathan Osman (webp plugin base)",
                            "2018",
-                           "ROM SNES/NES/GB bin image",
+                           "ROM GEN/SNES/NES/GB bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -200,12 +200,12 @@ void run(const gchar * name,
         // * .chr files auto-default to NES 2bpp,
         //   no need to show image format selection dialog
         if(!strcmp(name, LOAD_PROCEDURE_NES_2BPP_CHR))
+            // TODO: ?try to auto detect 1bpp vs 2bpp mode based on file size (4k = 1bpp, 4k+ = 2bpp)
             image_mode = BIN_MODE_NES_2BPP;
         else {
             // Only show settings dialog during interactive mode
             // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
             // - TODO: GIMP_RUN_WITH_LAST_VALS
-            // - TODO: default SNES 4bpp for non-interactive?
             if (GIMP_RUN_INTERACTIVE == run_mode) {
 
                 // Show the import/export dialog

@@ -51,12 +51,16 @@ void on_response(GtkDialog * dialog,
     // TODO: Using the dialog on import is disabled for now- remove support for import prompting?
     // TODO: convert strings to centralized definition
     // Match the string up to an output mode
-    if (!(g_strcmp0(string, "2bpp SNES/GB")))
-        *(data->image_mode) = BIN_MODE_SNESGB_2BPP;
+    if (!(g_strcmp0(string, "1bpp NES")))
+        *(data->image_mode) = BIN_MODE_NES_1BPP;
     else if (!(g_strcmp0(string, "2bpp NES")))
         *(data->image_mode) = BIN_MODE_NES_2BPP;
+    else if (!(g_strcmp0(string, "2bpp SNES/GB")))
+        *(data->image_mode) = BIN_MODE_SNESGB_2BPP;
     else if (!(g_strcmp0(string, "4bpp SNES")))
         *(data->image_mode) = BIN_MODE_SNES_4BPP;
+    else if (!(g_strcmp0(string, "4bpp GEN")))
+        *(data->image_mode) = BIN_MODE_GENS_4BPP;
     else
         *(data->image_mode) = -1; //
 
@@ -134,9 +138,11 @@ int export_dialog(int * image_mode, const gchar * name)
 
     // Add the mode select entries
     // TODO: convert strings to centralized definition
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
 
     // Select default value
     // TODO: try to auto-detect image mode based on number of colors? (export only)
