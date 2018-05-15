@@ -4,9 +4,11 @@ gimp file-rom-bin plugin
 GIMP plugin for reading, writing and converting ROM .bin and .chr image (tile) files. Useful in the emulation world for ROM mods, hacks and extracting/inserting artwork.
 
 Supported formats: 
+ * NES 1bpp
  * NES 2bpp
  * SNES/GB 2bpp
  * SNES 4bpp
+ * Genesis 4bpp
  
 
 ## Acknowledgement:
