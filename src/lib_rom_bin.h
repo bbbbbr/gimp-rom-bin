@@ -30,6 +30,7 @@ enum rom_bin_modes {
     BIN_MODE_NES_2BPP,
     BIN_MODE_SNESGB_2BPP,
     BIN_MODE_SNES_4BPP,
+    BIN_MODE_GGSMSWSC_4BPP,
     BIN_MODE_GENS_4BPP,
 };
 

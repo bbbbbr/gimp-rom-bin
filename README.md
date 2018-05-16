@@ -8,6 +8,7 @@ Supported formats:
  * NES 2bpp
  * SNES/GB 2bpp
  * SNES 4bpp
+ * GG/SMS/WSC 4bpp 
  * Genesis 4bpp
  
 

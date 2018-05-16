@@ -1,5 +1,5 @@
 /*=======================================================================
-              SNES bin load / save plugin for the GIMP
+              ROM bin load / save plugin for the GIMP
                  Copyright 2018 - X
 
                  Useful : https://www.rpi.edu/dept/acm/packages/gimp/gimp-1.2.3/plug-ins/common/pcx.c
@@ -19,5 +19,5 @@
 =======================================================================*/
 
 
-int bin_decode_to_indexed_gens_4bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
-int bin_encode_to_indexed_gens_4bpp(unsigned char *, int, int, long int *, unsigned char **, int);
+int bin_decode_to_indexed_ggsmswsc_4bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
+int bin_encode_to_indexed_ggsmswsc_4bpp(unsigned char *, int, int, long int *, unsigned char **, int);

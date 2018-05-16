@@ -59,6 +59,8 @@ void on_response(GtkDialog * dialog,
         *(data->image_mode) = BIN_MODE_SNESGB_2BPP;
     else if (!(g_strcmp0(string, "4bpp SNES")))
         *(data->image_mode) = BIN_MODE_SNES_4BPP;
+    else if (!(g_strcmp0(string, "4bpp GG/SMS/WSC")))
+        *(data->image_mode) = BIN_MODE_GGSMSWSC_4BPP;
     else if (!(g_strcmp0(string, "4bpp GEN")))
         *(data->image_mode) = BIN_MODE_GENS_4BPP;
     else
@@ -142,6 +144,7 @@ int export_dialog(int * image_mode, const gchar * name)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GG/SMS/WSC");
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
 
     // Select default value
