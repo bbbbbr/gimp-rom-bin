@@ -127,7 +127,7 @@ static int bin_decode_image_data_gens_4bpp(void * file_data, long int * file_siz
                     // Read a byte and unpack two horizontal pixels
                     pixdata = *((unsigned char *)file_data + (*file_offset)++ );
 
-                    // TOOD: Big Endian?
+                    // Big Endian
                     // b0.0xF0 = pixel.0, b0.0x0F = pixel.1
                     *(ptr_image_pixel++) = (pixdata >> 4) & 0x0F;
                     *(ptr_image_pixel++) = (pixdata & 0x0F);
