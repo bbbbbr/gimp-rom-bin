@@ -2,8 +2,6 @@
               ROM bin load / save plugin for the GIMP
                  Copyright 2018 - X
 
-                 Useful : https://www.rpi.edu/dept/acm/packages/gimp/gimp-1.2.3/plug-ins/common/pcx.c
-
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
@@ -19,5 +17,13 @@
 =======================================================================*/
 
 
-int bin_decode_to_indexed_nes_1bpp(void *, long int, image_gfx_data *, image_color_data *, int);
-int bin_encode_to_indexed_nes_1bpp(unsigned char *, int, int, long int *, unsigned char **, int);
+#ifndef ROM_UTILS_FILE_HEADER
+#define ROM_UTILS_FILE_HEADER
+
+#include "lib_rom_bin.h"
+
+    void romimg_calc_image_size(long int, image_gfx_data *, rom_gfx_attrib);
+    int romimg_insert_color_to_map(unsigned char, unsigned char, unsigned char, image_color_data *);
+    int romimg_load_color_data(image_color_data *);
+
+#endif // ROM_UTILS_FILE_HEADER

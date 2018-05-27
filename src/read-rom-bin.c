@@ -34,12 +34,21 @@ int read_rom_bin(const gchar * filename, int image_mode)
     // TODO : Look into void* vs unsigned char* for ptr_file_data
     void * filedata = NULL;
 
-    guchar * image_data = NULL,
-           * color_map_data = NULL;
+    image_gfx_data gfx;
 
-    int width = 0,
-        height = 0;
-    int color_map_size = 0;
+        gfx.image_mode = image_mode;
+        gfx.width      = 0;
+        gfx.height     = 0;
+        gfx.p_data     = NULL;
+
+
+    image_color_data colorpal;
+
+        colorpal.index           = 0;
+        colorpal.bytes_per_pixel = 0;
+        colorpal.size            = 0;
+        colorpal.p_data          = NULL;
+
 
     gint32 new_image_id,
            new_layer_id;
@@ -73,11 +82,8 @@ int read_rom_bin(const gchar * filename, int image_mode)
     // Perform the load procedure and free the raw data.
     status = rom_bin_decode_to_indexed(filedata,
                                        filesize,
-                                       &width,
-                                       &height,
-                                       &image_data,
-                                       &color_map_data,
-                                       &color_map_size,
+                                       &gfx,
+                                       &colorpal,
                                        image_mode);
 
     free(filedata);
@@ -85,13 +91,15 @@ int read_rom_bin(const gchar * filename, int image_mode)
     // Check to make sure that the load was successful
     if (0 != status)
     {
-        printf("Image load failed %lx, %lx\n", (unsigned long)image_data, (unsigned long)color_map_data);
+        printf("Image load failed \n");
 
-        if (image_data)
-            free(image_data);
+        if (gfx.p_data)
+            free(gfx.p_data);
 
-        if (color_map_data)
-            free(color_map_data);
+        if (colorpal.p_data)
+            free(colorpal.p_data);
+
+        printf("Image load failed: free complete \n");
 
         return -1;
     }
@@ -99,12 +107,12 @@ int read_rom_bin(const gchar * filename, int image_mode)
 
 
     // Now create the new INDEXED image.
-    new_image_id = gimp_image_new(width, height, GIMP_INDEXED);
+    new_image_id = gimp_image_new(gfx.width, gfx.height, GIMP_INDEXED);
 
     // Create the new layer
     new_layer_id = gimp_layer_new(new_image_id,
                                   "Background",
-                                  width, height,
+                                  gfx.width, gfx.height,
                                   GIMP_INDEXED_IMAGE,
                                   100,
                                   GIMP_NORMAL_MODE);
@@ -114,30 +122,30 @@ int read_rom_bin(const gchar * filename, int image_mode)
 
 
     // Set up the indexed color map
-    gimp_image_set_colormap(new_image_id, color_map_data, color_map_size);
+    gimp_image_set_colormap(new_image_id, colorpal.p_data, colorpal.size);
 
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
                         drawable,
                         0, 0,
-                        width, height,
+                        gfx.width, gfx.height,
                         TRUE, FALSE);
 
     // Now FINALLY set the pixel data
     gimp_pixel_rgn_set_rect(&rgn,
-                            image_data,
+                            gfx.p_data,
                             0, 0,
-                            width, height);
+                            gfx.width, gfx.height);
 
     // We're done with the drawable
     gimp_drawable_flush(drawable);
     gimp_drawable_detach(drawable);
 
     // Free the image data
-    free(image_data);
+    free(gfx.p_data);
 
     // Free the color map data
-    free(color_map_data);
+    free(colorpal.p_data);
 
     // Add the layer to the image
     gimp_image_add_layer(new_image_id, new_layer_id, 0);
