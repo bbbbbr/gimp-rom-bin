@@ -83,43 +83,44 @@ static const rom_gfx_attrib rom_attrib = {
 
 
 // TODO: Pass in rom_attrib instead of glocal static?
-static int bin_decode_image_data_nes_1bpp(void * file_data, long int * file_size, image_gfx_data * p_gfx)
+static int bin_decode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx,
+                                          app_gfx_data * p_app_gfx)
 {
     unsigned char pixdata[1];
     unsigned char * p_image_pixel;
-    long int      file_offset = 0;
+    long int      offset = 0;
 
     // Check incoming buffers & vars
-    if ((file_data      == NULL) ||
-        (p_gfx->p_data  == NULL) ||
-        (p_gfx->width   == 0) ||
-        (p_gfx->height  == 0))
+    if ((p_rom_gfx->p_data  == NULL) ||
+        (p_app_gfx->p_data  == NULL) ||
+        (p_app_gfx->width   == 0) ||
+        (p_app_gfx->height  == 0))
         return -1;
 
 
     // Make sure there is enough image data
     // then copy it into the image buffer
     // File size is a function of bits per pixel, width and height
-    if (*file_size < ((p_gfx->width / (8 / rom_attrib.BITS_PER_PIXEL)) * p_gfx->height))
+    if (p_rom_gfx->size < ((p_app_gfx->width / (8 / rom_attrib.BITS_PER_PIXEL)) * p_app_gfx->height))
         return -1;
 
 printf("Entering decode, passed file size check\n");
 
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
-    file_offset = 0;
+    offset = 0;
 
-    for (int y=0; y < (p_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
+    for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
-        for (int x=0; x < (p_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+        for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
                 // Read two bytes and unpack the 8 horizontal pixels
-                pixdata[0] = *((unsigned char *)file_data + file_offset);
+                pixdata[0] = *(p_rom_gfx->p_data + offset);
 
                 // Set up the pointer to the pixel in the destination image buffer
-                p_image_pixel = (p_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_gfx->width)
+                p_image_pixel = (p_app_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_app_gfx->width)
                                                +   (x * rom_attrib.TILE_PIXEL_WIDTH));
 
                 // Unpack the 8 horizontal pixels
@@ -135,7 +136,7 @@ printf("Entering decode, passed file size check\n");
                 }
 
                 // Increment the pointer to the next row in the tile
-                file_offset++;
+                offset++;
             } // End of per-tile decode
         }
     }
@@ -146,40 +147,40 @@ printf("Entering decode, passed file size check\n");
 
 
 
-static int bin_encode_image_data_nes_1bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char * ptr_output_data)
+static int bin_encode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx, app_gfx_data * p_app_gfx)
 {
     unsigned char pixdata[1];
-    unsigned char * ptr_image_pixel;
-    unsigned char * ptr_output_offset;
+    unsigned char * p_image_pixel;
+    unsigned char * p_output_data;
 
     // Check incoming buffers & vars
-    if ((ptr_source_image_data == NULL) ||
-        (ptr_output_size       == NULL) ||
-        (ptr_output_data       == NULL) ||
-        (source_width          == 0) ||
-        (source_height         == 0))
+    if ((p_app_gfx->p_data == NULL) ||
+        (p_rom_gfx->p_data == NULL) ||
+        (p_rom_gfx->size   == 0) ||
+        (p_app_gfx->width  == 0) ||
+        (p_app_gfx->height == 0))
         return -1;
 
 
     // Make sure there is enough size in the output buffer
-    if (*ptr_output_size < (source_width * source_height) / (8 / rom_attrib.BITS_PER_PIXEL))
+    if (p_rom_gfx->size < (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL))
         return -1;
 
     // Un-bitpack the pixels
     // Encode the image top-to-bottom
 
     // Set the output buffer at the start
-    ptr_output_offset = ptr_output_data;
+    p_output_data = p_rom_gfx->p_data;
 
-    for (int y=0; y < (source_height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
+    for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
-        for (int x=0; x < (source_width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+        for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the source image buffer
-                ptr_image_pixel = (ptr_source_image_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * source_width)
-                                                         +   (x * rom_attrib.TILE_PIXEL_WIDTH));
+                p_image_pixel = (p_app_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_app_gfx->width)
+                                                   +   (x * rom_attrib.TILE_PIXEL_WIDTH));
                 pixdata[0] = 0;
                 pixdata[1] = 0;
 
@@ -187,17 +188,17 @@ static int bin_encode_image_data_nes_1bpp(unsigned char * ptr_source_image_data,
                 for (int b=0;b < NES_PIXELS_PER_BYTE_1BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
-                    pixdata[0] = (pixdata[0] << 1) |  ( (*ptr_image_pixel) & 0x01);
+                    pixdata[0] = (pixdata[0] << 1) |  ( (*p_image_pixel) & 0x01);
 
                     // Advance to next pixel
-                    ptr_image_pixel++;
+                    p_image_pixel++;
                 }
 
                 // Save the two packed bytes. LS Bits then MS Bits (MS Bits are 8 bytes later)
-                *(ptr_output_offset) = pixdata[0];
+                *(p_output_data) = pixdata[0];
 
                 // Advance to next row in the tile
-                ptr_output_offset++;
+                p_output_data++;
             }
         }
     }
@@ -210,30 +211,26 @@ static int bin_encode_image_data_nes_1bpp(unsigned char * ptr_source_image_data,
 
 
 
-int bin_decode_to_indexed_nes_1bpp(void * p_file_data, long int file_size, image_gfx_data * p_gfx, image_color_data * p_colorpal)
+int bin_decode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
+                                   app_gfx_data * p_app_gfx,
+                                   app_color_data * p_colorpal)
 {
-    printf("bin_decode_to_indexed_nes_1bpp\n");
-
     // Calculate width and height
-    romimg_calc_image_size(file_size, p_gfx, rom_attrib);
-
+    romimg_calc_image_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
 
     // Allocate the incoming image buffer, abort if it fails
-    if (NULL == (p_gfx->p_data = malloc(p_gfx->width * p_gfx->height)) )
+    if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height)) )
         return -1;
 
-
     // Read the image data
-    if (0 != bin_decode_image_data_nes_1bpp(p_file_data,
-                                            &file_size,
-                                            p_gfx))
+    if (0 != bin_decode_image_data_nes_1bpp(p_rom_gfx,
+                                            p_app_gfx))
         return -1;
 
 
     // Set up info about the color map
     p_colorpal->size            = rom_attrib.DECODED_NUM_COLORS;
     p_colorpal->bytes_per_pixel = rom_attrib.DECODED_BYTES_PER_PIXEL;
-
 
     // Allocate the color map buffer, abort if it fails
     if (NULL == (p_colorpal->p_data = malloc(p_colorpal->size * p_colorpal->bytes_per_pixel)) )
@@ -243,31 +240,33 @@ int bin_decode_to_indexed_nes_1bpp(void * p_file_data, long int file_size, image
     if (0 != romimg_load_color_data(p_colorpal))
         return -1;
 
+
     // Return success
     return 0;
 }
 
 
-int bin_encode_to_indexed_nes_1bpp(unsigned char * ptr_source_image_data, int source_width, int source_height, long int * ptr_output_size, unsigned char ** ptr_ptr_output_data, int image_mode)
+int bin_encode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
+                                   app_gfx_data * p_app_gfx)
 {
     // TODO: Warn if number of colors > 2
 
     // Set output file size based on Width, Height and bit packing
-    *ptr_output_size = (source_width * source_height) / (8 / rom_attrib.BITS_PER_PIXEL);
+    // TODO: standardize and centralize
+    p_rom_gfx->size = (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL);
 
-    *ptr_ptr_output_data = malloc(*ptr_output_size);
+    p_rom_gfx->p_data = malloc(p_rom_gfx->size);
+
+printf("encode : output size = %x",p_rom_gfx->size);
 
     // Did the alloc succeed?
-    if(*ptr_ptr_output_data == NULL)
+    if(p_rom_gfx->p_data == NULL)
         return -1;
 
 
     // Encode the image data
-    if (0 != bin_encode_image_data_nes_1bpp(ptr_source_image_data,
-                                            source_width,
-                                            source_height,
-                                            ptr_output_size,
-                                           *ptr_ptr_output_data));
+    if (0 != bin_encode_image_data_nes_1bpp(p_rom_gfx,
+                                            p_app_gfx));
         return -1;
 
 

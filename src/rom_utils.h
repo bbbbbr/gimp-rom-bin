@@ -22,8 +22,8 @@
 
 #include "lib_rom_bin.h"
 
-    void romimg_calc_image_size(long int, image_gfx_data *, rom_gfx_attrib);
-    int romimg_insert_color_to_map(unsigned char, unsigned char, unsigned char, image_color_data *);
-    int romimg_load_color_data(image_color_data *);
+    void romimg_calc_image_size(long int,  app_gfx_data *, rom_gfx_attrib);
+    int romimg_insert_color_to_map(unsigned char, unsigned char, unsigned char, app_color_data *);
+    int romimg_load_color_data(app_color_data *);
 
 #endif // ROM_UTILS_FILE_HEADER

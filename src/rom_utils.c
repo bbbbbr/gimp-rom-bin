@@ -20,7 +20,7 @@
 #include "rom_utils.h"
 
 
-void romimg_calc_image_size(long int file_size, image_gfx_data * p_gfx, rom_gfx_attrib rom_attrib)
+void romimg_calc_image_size(long int file_size,  app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
 {
     printf("romimg_calc_image_size\n");
 
@@ -39,44 +39,44 @@ void romimg_calc_image_size(long int file_size, image_gfx_data * p_gfx, rom_gfx_
     if ((tiles * rom_attrib.TILE_PIXEL_WIDTH) < rom_attrib.IMAGE_WIDTH_DEFAULT) {
 
         // Use number of tiles x size as the width
-        p_gfx->width = (tiles * rom_attrib.TILE_PIXEL_WIDTH);
+        p_app_gfx->width = (tiles * rom_attrib.TILE_PIXEL_WIDTH);
     }
     else
     {
         // Determine image width as a function of tile count
 
         // Starting width is 1 tile wide
-        p_gfx->width = 1;
+        p_app_gfx->width = 1;
 
         // Keep increasing the width as long as it results in
         // an even multiple of the tiles
         // *and* it's <= 128 pixels wide (the optimal width)
-        while ( ((tiles % (p_gfx->width * 2)) == 0) &&
-                (p_gfx->width * 2 * rom_attrib.TILE_PIXEL_WIDTH <= rom_attrib.IMAGE_WIDTH_DEFAULT) ) {
+        while ( ((tiles % (p_app_gfx->width * 2)) == 0) &&
+                (p_app_gfx->width * 2 * rom_attrib.TILE_PIXEL_WIDTH <= rom_attrib.IMAGE_WIDTH_DEFAULT) ) {
 
             // Use the doubled width if it's still resulting in
             // an even multiple of the tiles
-            p_gfx->width *= 2;
+            p_app_gfx->width *= 2;
         }
 
         // Scale the width value up to tile-pixel-size
-        p_gfx->width = (p_gfx->width * rom_attrib.TILE_PIXEL_WIDTH);
+        p_app_gfx->width = (p_app_gfx->width * rom_attrib.TILE_PIXEL_WIDTH);
     }
 
 
     // * Height is a function of width, tile height and number of tiles
     //   Round up: Integer rounding up: (x + (n-1)) / n
-    p_gfx->height = (((tiles * rom_attrib.TILE_PIXEL_WIDTH) + (rom_attrib.IMAGE_WIDTH_DEFAULT - 1))
+    p_app_gfx->height = (((tiles * rom_attrib.TILE_PIXEL_WIDTH) + (rom_attrib.IMAGE_WIDTH_DEFAULT - 1))
                    / rom_attrib.IMAGE_WIDTH_DEFAULT);
 
     // Now scale up by the tile height
-    p_gfx->height *= rom_attrib.TILE_PIXEL_HEIGHT;
+    p_app_gfx->height *= rom_attrib.TILE_PIXEL_HEIGHT;
 
 }
 
 
 
-int romimg_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, image_color_data * p_colorpal)
+int romimg_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, app_color_data * p_colorpal)
 {
     printf("romimg_insert_color_to_map\n");
 
@@ -95,7 +95,7 @@ int romimg_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b
 
 
 // TODO: FEATURE: Consider trying to look for .pal file with name that matches .bin file and load it
-int romimg_load_color_data(image_color_data * p_colorpal)
+int romimg_load_color_data(app_color_data * p_colorpal)
 {
     int status = 0;
 

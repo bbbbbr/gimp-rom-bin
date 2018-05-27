@@ -19,5 +19,5 @@
 =======================================================================*/
 
 
-int bin_decode_to_indexed_nes_1bpp(void *, long int, image_gfx_data *, image_color_data *);
-int bin_encode_to_indexed_nes_1bpp(unsigned char *, int, int, long int *, unsigned char **, int);
+int bin_decode_to_indexed_nes_1bpp(rom_gfx_data *, app_gfx_data *, app_color_data *);
+int bin_encode_to_indexed_nes_1bpp(rom_gfx_data *, app_gfx_data *);

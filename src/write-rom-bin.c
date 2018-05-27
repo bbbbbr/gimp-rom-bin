@@ -32,13 +32,17 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
     gint bpp;
     GimpPixelRgn rgn;
 
-    long int source_data_size = 0;
-    guchar * source_image_data = NULL;
-
-    // TODO: was size_t output_size = 0;
-    long int output_size = 0;
-    unsigned char * output_data = NULL;
     FILE * file;
+
+
+    app_gfx_data   app_gfx;
+    app_color_data colorpal; // TODO: rename to app_colorpal?
+    rom_gfx_data   rom_gfx;
+
+    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
+
+    app_gfx.image_mode = image_mode;
+
 
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
@@ -61,38 +65,34 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
                         FALSE, FALSE);
 
 
-    // Determine the size of the array of image data to get
-    // and allocate it.
-    source_data_size = drawable->width * drawable->height * bpp;
-    source_image_data = malloc(source_data_size);
+    // Determine the array size for the app's image then allocate it
+    app_gfx.width   = drawable->width;
+    app_gfx.height  = drawable->height;
+    app_gfx.size    =  drawable->width * drawable->height * bpp;
+    app_gfx.p_data  = malloc(app_gfx.size);
 
     // Get the image data
     gimp_pixel_rgn_get_rect(&rgn,
-                            source_image_data,
+                            app_gfx.p_data,
                             0, 0,
                             drawable->width,
                             drawable->height);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
-
-    status = rom_bin_encode_to_indexed(source_image_data,
-                                       drawable->width,
-                                       drawable->height,
-                                       &output_size,
-                                       &output_data,
-                                       image_mode);
+    status = rom_bin_encode_to_indexed(&rom_gfx,
+                                       &app_gfx);
 
 
     // Free the image data
-    free(source_image_data);
+    free(app_gfx.p_data);
 
     // Detach the drawable
     gimp_drawable_detach(drawable);
 
     // Make sure that the write was successful
-    if(output_size == FALSE)
+    if(rom_gfx.size == FALSE)
     {
-        free(output_data);
+        free(rom_gfx.p_data);
         return 0;
     }
 
@@ -100,13 +100,13 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
     file = fopen(filename, "wb");
     if(!file)
     {
-        free(output_data);
+        free(rom_gfx.p_data);
         return 0;
     }
 
     // Write the data and close it
-    fwrite(output_data, output_size, 1, file);
-    free(output_data);
+    fwrite(rom_gfx.p_data, rom_gfx.size, 1, file);
+    free(rom_gfx.p_data);
     fclose(file);
 
     return 1;

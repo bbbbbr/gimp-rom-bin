@@ -52,25 +52,31 @@
         } rom_gfx_attrib;
 
 
-        typedef struct image_gfx_data {
-            int              image_mode; // TODO update functions and calls to use this
+        typedef struct  app_gfx_data {
+            int              image_mode;
             unsigned int     width;
             unsigned int     height;
             unsigned char  * p_data;
-        } image_gfx_data;
+            unsigned char    bytes_per_pixel;
+            int              size;
+        }  app_gfx_data;
 
-        typedef struct image_color_data {
+        typedef struct rom_gfx_data {
+            long int        size;
+            unsigned char * p_data;
+        } rom_gfx_data;
+
+        typedef struct app_color_data {
             unsigned int     index;
             unsigned char    bytes_per_pixel;
             int              size;
             unsigned char * p_data;
-        } image_color_data;
+        } app_color_data;
 
+    void rom_bin_init_structs(rom_gfx_data *, app_gfx_data *, app_color_data *);
 
-
-
-    int rom_bin_decode_to_indexed(void *, long int, image_gfx_data *, image_color_data *);
-    int rom_bin_encode_to_indexed(unsigned char *, int, int, long int *, unsigned char **, int);
+    int rom_bin_decode_to_indexed(rom_gfx_data *, app_gfx_data *, app_color_data *);
+    int rom_bin_encode_to_indexed(rom_gfx_data *, app_gfx_data *);
 
 
 #endif // ROM_BIN_FILE_HEADER
