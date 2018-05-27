@@ -53,7 +53,7 @@
 
 
         typedef struct image_gfx_data {
-            unsigned char    image_mode; // TODO update functions and calls to use this
+            int              image_mode; // TODO update functions and calls to use this
             unsigned int     width;
             unsigned int     height;
             unsigned char  * p_data;
@@ -69,7 +69,7 @@
 
 
 
-    int rom_bin_decode_to_indexed(void *, long int, image_gfx_data *, image_color_data *, int);
+    int rom_bin_decode_to_indexed(void *, long int, image_gfx_data *, image_color_data *);
     int rom_bin_encode_to_indexed(unsigned char *, int, int, long int *, unsigned char **, int);
 
 

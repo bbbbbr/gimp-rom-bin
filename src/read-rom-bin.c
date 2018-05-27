@@ -83,8 +83,7 @@ int read_rom_bin(const gchar * filename, int image_mode)
     status = rom_bin_decode_to_indexed(filedata,
                                        filesize,
                                        &gfx,
-                                       &colorpal,
-                                       image_mode);
+                                       &colorpal);
 
     free(filedata);
 

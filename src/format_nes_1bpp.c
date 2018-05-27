@@ -210,7 +210,7 @@ static int bin_encode_image_data_nes_1bpp(unsigned char * ptr_source_image_data,
 
 
 
-int bin_decode_to_indexed_nes_1bpp(void * p_file_data, long int file_size, image_gfx_data * p_gfx, image_color_data * p_colorpal, int image_mode)
+int bin_decode_to_indexed_nes_1bpp(void * p_file_data, long int file_size, image_gfx_data * p_gfx, image_color_data * p_colorpal)
 {
     printf("bin_decode_to_indexed_nes_1bpp\n");
 

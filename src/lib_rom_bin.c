@@ -45,7 +45,7 @@
 
 // TODO: use a structure to pass all these vars
 // TODO: tidy this up
-int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_data * p_gfx, image_color_data * p_colorpal, int image_mode)
+int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_data * p_gfx, image_color_data * p_colorpal)
 {
 
     // TODO : Shims for compiler
@@ -59,16 +59,15 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
     printf("rom_bin_decode_to_indexed\n");
 
 
-    if (BIN_MODE_NES_1BPP == image_mode) {
+    if (BIN_MODE_NES_1BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_nes_1bpp(p_file_data,
                                                 file_size,
                                                 p_gfx,
-                                                p_colorpal,
-                                                image_mode))
+                                                p_colorpal))
             return -1;
     }
-    else if (BIN_MODE_NES_2BPP == image_mode) {
+    else if (BIN_MODE_NES_2BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_nes_2bpp(p_file_data,
                                                 file_size,
@@ -77,10 +76,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                 p_p_image_data,
                                                 p_p_color_map_data,
                                                 p_color_map_size,
-                                                image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
-    else if (BIN_MODE_SNESGB_2BPP == image_mode) {
+    else if (BIN_MODE_SNESGB_2BPP == p_gfx->image_mode) {
 
         if (0 != snesbin_decode_to_indexed_snesgb_2bpp(p_file_data,
                                                        file_size,
@@ -89,10 +88,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                        p_p_image_data,
                                                        p_p_color_map_data,
                                                        p_color_map_size,
-                                                       image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
-    else if (BIN_MODE_NGP_2BPP == image_mode) {
+    else if (BIN_MODE_NGP_2BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_ngp_2bpp(p_file_data,
                                                 file_size,
@@ -101,10 +100,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                 p_p_image_data,
                                                 p_p_color_map_data,
                                                 p_color_map_size,
-                                                image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
-    else if (BIN_MODE_GBA_4BPP == image_mode) {
+    else if (BIN_MODE_GBA_4BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_gba_4bpp(p_file_data,
                                                 file_size,
@@ -113,10 +112,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                 p_p_image_data,
                                                 p_p_color_map_data,
                                                 p_color_map_size,
-                                                image_mode))
+                                                p_gfx->image_mode))
         return -1;
     }
-    else if (BIN_MODE_SNES_4BPP == image_mode) {
+    else if (BIN_MODE_SNES_4BPP == p_gfx->image_mode) {
 
         if (0 != snesbin_decode_to_indexed_snes_4bpp(p_file_data,
                                                      file_size,
@@ -125,10 +124,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                      p_p_image_data,
                                                      p_p_color_map_data,
                                                      p_color_map_size,
-                                                     image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
-    else if (BIN_MODE_GGSMSWSC_4BPP == image_mode) {
+    else if (BIN_MODE_GGSMSWSC_4BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_ggsmswsc_4bpp(p_file_data,
                                                      file_size,
@@ -137,10 +136,10 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                      p_p_image_data,
                                                      p_p_color_map_data,
                                                      p_color_map_size,
-                                                     image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
-    else if (BIN_MODE_GENS_4BPP == image_mode) {
+    else if (BIN_MODE_GENS_4BPP == p_gfx->image_mode) {
 
         if (0 != bin_decode_to_indexed_gens_4bpp(p_file_data,
                                                  file_size,
@@ -149,7 +148,7 @@ int rom_bin_decode_to_indexed(void * p_file_data, long int file_size, image_gfx_
                                                  p_p_image_data,
                                                  p_p_color_map_data,
                                                  p_color_map_size,
-                                                 image_mode))
+                                                p_gfx->image_mode))
             return -1;
     }
     else {
