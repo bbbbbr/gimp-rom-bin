@@ -31,7 +31,7 @@ long int romimg_calc_encoded_size(app_gfx_data * p_app_gfx, rom_gfx_attrib rom_a
 
 
 // TODO: rename romimg_calc_decoded(or app)_size
-void romimg_calc_image_size(long int file_size,  app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
+void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
 {
     // NOTE: If tile count is not an even multiple of IMAGE_WIDTH_DEFAULT
     //       then the width has to be adjusted to a multiple that works,

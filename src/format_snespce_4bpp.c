@@ -256,7 +256,7 @@ int bin_decode_snes_4bpp(rom_gfx_data * p_rom_gfx,
                          app_color_data * p_colorpal)
 {
     // Calculate width and height
-    romimg_calc_image_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
+    romimg_calc_decoded_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
 
     // Allocate the incoming image buffer, abort if it fails
     if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height)) )
