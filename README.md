@@ -17,6 +17,7 @@ Supported formats:
 ## Acknowledgement:
  * Source uses some webp gimp plugin code from Nathan Osman (Copyright 2012)
  * Some format documentation from: https://mrclick.zophar.net/TilEd/download/consolegfx.txt
+ * YYchr was used for a lot validating format input/output
 
 
 ## Quick instructions:
