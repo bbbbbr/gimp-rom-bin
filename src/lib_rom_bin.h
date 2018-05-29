@@ -37,6 +37,8 @@
         BIN_MODE_SNES_4BPP,
         BIN_MODE_GGSMSWSC_4BPP,
         BIN_MODE_GENS_4BPP,
+
+        BIN_MODE_LAST
     };
 
     // TODO: move these to lib_rom_bin.h

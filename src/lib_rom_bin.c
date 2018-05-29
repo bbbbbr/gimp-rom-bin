@@ -36,6 +36,35 @@
 #include <libgimp/gimp.h>
 
 
+
+static int (*function_map_decode[])(rom_gfx_data *,
+                                    app_gfx_data *,
+                                    app_color_data *) =  {
+        [BIN_MODE_NES_1BPP]      = bin_decode_nes_1bpp,
+        [BIN_MODE_NES_2BPP]      = bin_decode_nes_2bpp,
+        [BIN_MODE_SNESGB_2BPP]   = bin_decode_snesgb_2bpp,
+        [BIN_MODE_NGP_2BPP]      = bin_decode_ngp_2bpp,
+        [BIN_MODE_GBA_4BPP]      = bin_decode_gba_4bpp,
+        [BIN_MODE_SNES_4BPP]     = bin_decode_snes_4bpp,
+        [BIN_MODE_GGSMSWSC_4BPP] = bin_decode_ggsmswsc_4bpp,
+        [BIN_MODE_GENS_4BPP]     = bin_decode_gens_4bpp,
+};
+
+
+static int (*function_map_encode[])(rom_gfx_data *,
+                                    app_gfx_data *) =  {
+        [BIN_MODE_NES_1BPP]      = bin_encode_nes_1bpp,
+        [BIN_MODE_NES_2BPP]      = bin_encode_nes_2bpp,
+        [BIN_MODE_SNESGB_2BPP]   = bin_encode_snesgb_2bpp,
+        [BIN_MODE_NGP_2BPP]      = bin_encode_ngp_2bpp,
+        [BIN_MODE_GBA_4BPP]      = bin_encode_gba_4bpp,
+        [BIN_MODE_SNES_4BPP]     = bin_encode_snes_4bpp,
+        [BIN_MODE_GGSMSWSC_4BPP] = bin_encode_ggsmswsc_4bpp,
+        [BIN_MODE_GENS_4BPP]     = bin_encode_gens_4bpp,
+};
+
+
+
 void rom_bin_init_structs(rom_gfx_data * p_rom_gfx,
                           app_gfx_data * p_app_gfx,
                           app_color_data * p_colorpal)
@@ -57,73 +86,20 @@ void rom_bin_init_structs(rom_gfx_data * p_rom_gfx,
 
 
 
-// TODO: use a structure to pass all these vars
-// TODO: tidy this up
-// TODO: remove _indexed from function name
 int rom_bin_decode(rom_gfx_data * p_rom_gfx,
                    app_gfx_data * p_app_gfx,
                    app_color_data * p_colorpal)
 {
+    // Call the matching decode function
+    if (p_app_gfx->image_mode < BIN_MODE_LAST) {
 
-    if (BIN_MODE_NES_1BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_nes_1bpp(p_rom_gfx,
-                                     p_app_gfx,
-                                     p_colorpal))
+        if (0 != function_map_decode[ p_app_gfx->image_mode ](p_rom_gfx,
+                                                             p_app_gfx,
+                                                             p_colorpal))
             return -1;
     }
-    else if (BIN_MODE_NES_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_nes_2bpp(p_rom_gfx,
-                                     p_app_gfx,
-                                     p_colorpal))
-            return -1;
-    }
-    else if (BIN_MODE_SNESGB_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_snesgb_2bpp(p_rom_gfx,
-                                        p_app_gfx,
-                                        p_colorpal))
-            return -1;
-    }
-    else if (BIN_MODE_NGP_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_ngp_2bpp(p_rom_gfx,
-                                     p_app_gfx,
-                                     p_colorpal))
-            return -1;
-    }
-    else if (BIN_MODE_GBA_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_gba_4bpp(p_rom_gfx,
-                                     p_app_gfx,
-                                     p_colorpal))
+    else
         return -1;
-    }
-    else if (BIN_MODE_SNES_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_snes_4bpp(p_rom_gfx,
-                                      p_app_gfx,
-                                      p_colorpal))
-            return -1;
-    }
-    else if (BIN_MODE_GGSMSWSC_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_ggsmswsc_4bpp(p_rom_gfx,
-                                     p_app_gfx,
-                                     p_colorpal))
-            return -1;
-    }
-    else if (BIN_MODE_GENS_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_decode_gens_4bpp(p_rom_gfx,
-                                      p_app_gfx,
-                                      p_colorpal))
-            return -1;
-    }
-    else {
-        return -1;
-    }
 
 
     // Return success
@@ -131,62 +107,18 @@ int rom_bin_decode(rom_gfx_data * p_rom_gfx,
 }
 
 
-// TODO: tidy this up
-// TODO: remove _indexed from function name
 int rom_bin_encode(rom_gfx_data * p_rom_gfx,
                    app_gfx_data * p_app_gfx)
 {
-    if (BIN_MODE_NES_1BPP == p_app_gfx->image_mode) {
+    // Call the matching encode function
+    if (p_app_gfx->image_mode < BIN_MODE_LAST) {
 
-        if (0 != bin_encode_nes_1bpp(p_rom_gfx,
-                                     p_app_gfx))
+        if (0 != function_map_encode[ p_app_gfx->image_mode ](p_rom_gfx,
+                                                             p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_NES_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_nes_2bpp(p_rom_gfx,
-                                     p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_SNESGB_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_snesgb_2bpp(p_rom_gfx,
-                                        p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_NGP_2BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_ngp_2bpp(p_rom_gfx,
-                                     p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_GBA_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_gba_4bpp(p_rom_gfx,
-                                     p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_SNES_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_snes_4bpp(p_rom_gfx,
-                                      p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_GGSMSWSC_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_ggsmswsc_4bpp(p_rom_gfx,
-                                          p_app_gfx))
-            return -1;
-    }
-    else if (BIN_MODE_GENS_4BPP == p_app_gfx->image_mode) {
-
-        if (0 != bin_encode_gens_4bpp(p_rom_gfx,
-                                      p_app_gfx))
-            return -1;
-    }
-    else {
-            return -1;
-    }
+    else
+        return -1;
 
 
     // Return success

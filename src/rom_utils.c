@@ -33,8 +33,6 @@ long int romimg_calc_encoded_size(app_gfx_data * p_app_gfx, rom_gfx_attrib rom_a
 // TODO: rename romimg_calc_decoded(or app)_size
 void romimg_calc_image_size(long int file_size,  app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
 {
-    printf("romimg_calc_image_size\n");
-
     // NOTE: If tile count is not an even multiple of IMAGE_WIDTH_DEFAULT
     //       then the width has to be adjusted to a multiple that works,
     //       otherwise file loading will fail
@@ -109,8 +107,6 @@ void romimg_calc_image_size(long int file_size,  app_gfx_data * p_app_gfx, rom_g
 
 int romimg_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b, app_color_data * p_colorpal)
 {
-    printf("romimg_insert_color_to_map\n");
-
     // Make sure space is available in the buffer
     if (( (p_colorpal->index) + 2) > (p_colorpal->size * p_colorpal->bytes_per_pixel))
         return -1;
@@ -129,8 +125,6 @@ int romimg_insert_color_to_map(unsigned char r, unsigned char g, unsigned char b
 int romimg_load_color_data(app_color_data * p_colorpal)
 {
     int status = 0;
-
-printf("romimg_load_color_data\n");
 
     // Check incoming buffer
     if (NULL == p_colorpal->p_data)
