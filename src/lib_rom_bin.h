@@ -75,8 +75,8 @@
 
     void rom_bin_init_structs(rom_gfx_data *, app_gfx_data *, app_color_data *);
 
-    int rom_bin_decode_to_indexed(rom_gfx_data *, app_gfx_data *, app_color_data *);
-    int rom_bin_encode_to_indexed(rom_gfx_data *, app_gfx_data *);
+    int rom_bin_decode(rom_gfx_data *, app_gfx_data *, app_color_data *);
+    int rom_bin_encode(rom_gfx_data *, app_gfx_data *);
 
 
 #endif // ROM_BIN_FILE_HEADER

@@ -69,9 +69,9 @@ int read_rom_bin(const gchar * filename, int image_mode)
 
 
     // Perform the load procedure and free the raw data.
-    status = rom_bin_decode_to_indexed(&rom_gfx,
-                                       &app_gfx,
-                                       &colorpal);
+    status = rom_bin_decode(&rom_gfx,
+                            &app_gfx,
+                            &colorpal);
 
     free(rom_gfx.p_data);
 

@@ -19,5 +19,5 @@
 =======================================================================*/
 
 
-int snesbin_decode_to_indexed_snes_4bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
-int snesbin_encode_to_indexed_snes_4bpp(unsigned char *, int, int, long int *, unsigned char **, int);
+int bin_decode_snes_4bpp(rom_gfx_data *, app_gfx_data *, app_color_data *);
+int bin_encode_snes_4bpp(rom_gfx_data *, app_gfx_data *);

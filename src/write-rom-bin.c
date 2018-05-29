@@ -79,8 +79,8 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
                             drawable->height);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
-    status = rom_bin_encode_to_indexed(&rom_gfx,
-                                       &app_gfx);
+    status = rom_bin_encode(&rom_gfx,
+                           &app_gfx);
 
 
     // Free the image data

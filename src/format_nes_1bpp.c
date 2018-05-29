@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <libgimp/gimp.h>
+#include <libgimp/gimp.h> // TODO: remove?
 
 #define NES_PIXELS_PER_BYTE_1BPP           8    // 1 pixel = 1 bits, 8 pixels are spread across 1 bytes
 
@@ -37,10 +37,10 @@ static const rom_gfx_attrib rom_attrib = {
     128,  // .IMAGE_WIDTH_DEFAULT  // image defaults to 128 pixels wide
     8,    // .TILE_PIXEL_WIDTH     // tiles are 8 pixels wide
     8,    // .TILE_PIXEL_HEIGHT    // tiles 8 pixels tall
-    1,    // .BITS_PER_PIXEL       // 1 bit per pixel mode
+    1,    // .BITS_PER_PIXEL       // bits per pixel
 
-    2,    // .DECODED_NUM_COLORS         // 2 colors in pallete
-    3     // .DECODED_BYTES_PER_PIXEL    // 3 bytes: R,G,B  // TODO: CENTRALIZE?
+    2,    // .DECODED_NUM_COLORS         // colors in pallete
+    3     // .DECODED_BYTES_PER_PIXEL    // 3 bytes: R,G,B
 };
 
 
@@ -82,13 +82,13 @@ static const rom_gfx_attrib rom_attrib = {
 //
 
 
-// TODO: Pass in rom_attrib instead of glocal static?
-static int bin_decode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx,
-                                          app_gfx_data * p_app_gfx)
+// TODO: Pass in rom_attrib instead of local static?
+static int bin_decode_image(rom_gfx_data * p_rom_gfx,
+                            app_gfx_data * p_app_gfx)
 {
     unsigned char pixdata[1];
     unsigned char * p_image_pixel;
-    long int      offset = 0;
+    long int      offset;
 
     // Check incoming buffers & vars
     if ((p_rom_gfx->p_data  == NULL) ||
@@ -104,10 +104,11 @@ static int bin_decode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx,
     if (p_rom_gfx->size < ((p_app_gfx->width / (8 / rom_attrib.BITS_PER_PIXEL)) * p_app_gfx->height))
         return -1;
 
-printf("Entering decode, passed file size check\n");
 
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
+
+    // Set the output buffer at the start
     offset = 0;
 
     for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
@@ -121,7 +122,7 @@ printf("Entering decode, passed file size check\n");
 
                 // Set up the pointer to the pixel in the destination image buffer
                 p_image_pixel = (p_app_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_app_gfx->width)
-                                               +   (x * rom_attrib.TILE_PIXEL_WIDTH));
+                                                   +   (x * rom_attrib.TILE_PIXEL_WIDTH));
 
                 // Unpack the 8 horizontal pixels
                 for (int b=0;b < NES_PIXELS_PER_BYTE_1BPP; b++) {
@@ -147,11 +148,12 @@ printf("Entering decode, passed file size check\n");
 
 
 
-static int bin_encode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx, app_gfx_data * p_app_gfx)
+static int bin_encode_image(rom_gfx_data * p_rom_gfx,
+                            app_gfx_data * p_app_gfx)
 {
     unsigned char pixdata[1];
     unsigned char * p_image_pixel;
-    unsigned char * p_output_data;
+    long int      offset;
 
     // Check incoming buffers & vars
     if ((p_app_gfx->p_data == NULL) ||
@@ -166,11 +168,10 @@ static int bin_encode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx, app_gfx_data
     if (p_rom_gfx->size < (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL))
         return -1;
 
-    // Un-bitpack the pixels
     // Encode the image top-to-bottom
 
     // Set the output buffer at the start
-    p_output_data = p_rom_gfx->p_data;
+    offset = 0;
 
     for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
@@ -195,10 +196,10 @@ static int bin_encode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx, app_gfx_data
                 }
 
                 // Save the two packed bytes. LS Bits then MS Bits (MS Bits are 8 bytes later)
-                *(p_output_data) = pixdata[0];
+                *(p_rom_gfx->p_data + offset) = pixdata[0];
 
                 // Advance to next row in the tile
-                p_output_data++;
+                offset++;
             }
         }
     }
@@ -210,10 +211,10 @@ static int bin_encode_image_data_nes_1bpp(rom_gfx_data * p_rom_gfx, app_gfx_data
 
 
 
-
-int bin_decode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
-                                   app_gfx_data * p_app_gfx,
-                                   app_color_data * p_colorpal)
+// TODO: centralize duplicated function/code
+int bin_decode_nes_1bpp(rom_gfx_data * p_rom_gfx,
+                        app_gfx_data * p_app_gfx,
+                        app_color_data * p_colorpal)
 {
     // Calculate width and height
     romimg_calc_image_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
@@ -222,9 +223,10 @@ int bin_decode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
     if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height)) )
         return -1;
 
+
     // Read the image data
-    if (0 != bin_decode_image_data_nes_1bpp(p_rom_gfx,
-                                            p_app_gfx))
+    if (0 != bin_decode_image(p_rom_gfx,
+                              p_app_gfx))
         return -1;
 
 
@@ -246,27 +248,24 @@ int bin_decode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
 }
 
 
-int bin_encode_to_indexed_nes_1bpp(rom_gfx_data * p_rom_gfx,
-                                   app_gfx_data * p_app_gfx)
+// TODO: centralize duplicated function/code
+int bin_encode_nes_1bpp(rom_gfx_data * p_rom_gfx,
+                        app_gfx_data * p_app_gfx)
 {
-    // TODO: Warn if number of colors > 2
+    // TODO: Warn if number of colors > expected
 
     // Set output file size based on Width, Height and bit packing
-    // TODO: standardize and centralize
-    p_rom_gfx->size = (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL);
+    // Calculate width and height
+    p_rom_gfx->size = romimg_calc_encoded_size(p_app_gfx, rom_attrib);
 
-    p_rom_gfx->p_data = malloc(p_rom_gfx->size);
-
-printf("encode : output size = %x",p_rom_gfx->size);
-
-    // Did the alloc succeed?
-    if(p_rom_gfx->p_data == NULL)
+    // Allocate the color map buffer, abort if it fails
+    if (NULL == (p_rom_gfx->p_data = malloc(p_rom_gfx->size)) )
         return -1;
 
 
     // Encode the image data
-    if (0 != bin_encode_image_data_nes_1bpp(p_rom_gfx,
-                                            p_app_gfx));
+    if (0 != bin_encode_image(p_rom_gfx,
+                              p_app_gfx));
         return -1;
 
 

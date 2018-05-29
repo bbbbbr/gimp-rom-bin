@@ -60,113 +60,65 @@ void rom_bin_init_structs(rom_gfx_data * p_rom_gfx,
 // TODO: use a structure to pass all these vars
 // TODO: tidy this up
 // TODO: remove _indexed from function name
-int rom_bin_decode_to_indexed(rom_gfx_data * p_rom_gfx,
-                              app_gfx_data * p_app_gfx,
-                              app_color_data * p_colorpal)
+int rom_bin_decode(rom_gfx_data * p_rom_gfx,
+                   app_gfx_data * p_app_gfx,
+                   app_color_data * p_colorpal)
 {
-
-    // TODO : remove Shims for compiler
-    unsigned int   * p_width;
-    unsigned int   * p_height;
-    unsigned char ** p_p_image_data;
-
-    unsigned char ** p_p_color_map_data;
-    int            * p_color_map_size;
-    void * p_file_data;
-    long int file_size;
-
-    printf("rom_bin_decode_to_indexed\n");
-
 
     if (BIN_MODE_NES_1BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_nes_1bpp(p_rom_gfx,
-                                                p_app_gfx,
-                                                p_colorpal))
+        if (0 != bin_decode_nes_1bpp(p_rom_gfx,
+                                     p_app_gfx,
+                                     p_colorpal))
             return -1;
     }
     else if (BIN_MODE_NES_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_nes_2bpp(p_file_data,
-                                                file_size,
-                                                p_width,
-                                                p_height,
-                                                p_p_image_data,
-                                                p_p_color_map_data,
-                                                p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_nes_2bpp(p_rom_gfx,
+                                     p_app_gfx,
+                                     p_colorpal))
             return -1;
     }
     else if (BIN_MODE_SNESGB_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != snesbin_decode_to_indexed_snesgb_2bpp(p_file_data,
-                                                       file_size,
-                                                       p_width,
-                                                       p_height,
-                                                       p_p_image_data,
-                                                       p_p_color_map_data,
-                                                       p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_snesgb_2bpp(p_rom_gfx,
+                                        p_app_gfx,
+                                        p_colorpal))
             return -1;
     }
     else if (BIN_MODE_NGP_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_ngp_2bpp(p_file_data,
-                                                file_size,
-                                                p_width,
-                                                p_height,
-                                                p_p_image_data,
-                                                p_p_color_map_data,
-                                                p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_ngp_2bpp(p_rom_gfx,
+                                     p_app_gfx,
+                                     p_colorpal))
             return -1;
     }
     else if (BIN_MODE_GBA_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_gba_4bpp(p_file_data,
-                                                file_size,
-                                                p_width,
-                                                p_height,
-                                                p_p_image_data,
-                                                p_p_color_map_data,
-                                                p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_gba_4bpp(p_rom_gfx,
+                                     p_app_gfx,
+                                     p_colorpal))
         return -1;
     }
     else if (BIN_MODE_SNES_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != snesbin_decode_to_indexed_snes_4bpp(p_file_data,
-                                                     file_size,
-                                                     p_width,
-                                                     p_height,
-                                                     p_p_image_data,
-                                                     p_p_color_map_data,
-                                                     p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_snes_4bpp(p_rom_gfx,
+                                      p_app_gfx,
+                                      p_colorpal))
             return -1;
     }
     else if (BIN_MODE_GGSMSWSC_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_ggsmswsc_4bpp(p_file_data,
-                                                     file_size,
-                                                     p_width,
-                                                     p_height,
-                                                     p_p_image_data,
-                                                     p_p_color_map_data,
-                                                     p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_ggsmswsc_4bpp(p_rom_gfx,
+                                     p_app_gfx,
+                                     p_colorpal))
             return -1;
     }
     else if (BIN_MODE_GENS_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_decode_to_indexed_gens_4bpp(p_file_data,
-                                                 file_size,
-                                                 p_width,
-                                                 p_height,
-                                                 p_p_image_data,
-                                                 p_p_color_map_data,
-                                                 p_color_map_size,
-                                                p_app_gfx->image_mode))
+        if (0 != bin_decode_gens_4bpp(p_rom_gfx,
+                                      p_app_gfx,
+                                      p_colorpal))
             return -1;
     }
     else {
@@ -181,92 +133,55 @@ int rom_bin_decode_to_indexed(rom_gfx_data * p_rom_gfx,
 
 // TODO: tidy this up
 // TODO: remove _indexed from function name
-int rom_bin_encode_to_indexed(rom_gfx_data * p_rom_gfx,
-                              app_gfx_data * p_app_gfx)
+int rom_bin_encode(rom_gfx_data * p_rom_gfx,
+                   app_gfx_data * p_app_gfx)
 {
-    // compiler shims
-    unsigned char * ptr_source_image_data;
-    int source_width;
-    int source_height;
-    long int * ptr_output_size;
-    unsigned char ** ptr_ptr_output_data;
-    int image_mode;
-
-
     if (BIN_MODE_NES_1BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_nes_1bpp(p_rom_gfx,
-                                                p_app_gfx))
+        if (0 != bin_encode_nes_1bpp(p_rom_gfx,
+                                     p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_NES_2BPP == image_mode) {
+    else if (BIN_MODE_NES_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_nes_2bpp(ptr_source_image_data,
-                                                source_width,
-                                                source_height,
-                                                ptr_output_size,
-                                                ptr_ptr_output_data,
-                                                image_mode))
+        if (0 != bin_encode_nes_2bpp(p_rom_gfx,
+                                     p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_SNESGB_2BPP == image_mode) {
+    else if (BIN_MODE_SNESGB_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != snesbin_encode_to_indexed_snesgb_2bpp(ptr_source_image_data,
-                                                       source_width,
-                                                       source_height,
-                                                       ptr_output_size,
-                                                       ptr_ptr_output_data,
-                                                       image_mode))
+        if (0 != bin_encode_snesgb_2bpp(p_rom_gfx,
+                                        p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_NGP_2BPP == image_mode) {
+    else if (BIN_MODE_NGP_2BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_ngp_2bpp(ptr_source_image_data,
-                                                source_width,
-                                                source_height,
-                                                ptr_output_size,
-                                                ptr_ptr_output_data,
-                                                image_mode))
+        if (0 != bin_encode_ngp_2bpp(p_rom_gfx,
+                                     p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_GBA_4BPP == image_mode) {
+    else if (BIN_MODE_GBA_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_gba_4bpp(ptr_source_image_data,
-                                                source_width,
-                                                source_height,
-                                                ptr_output_size,
-                                                ptr_ptr_output_data,
-                                                image_mode))
+        if (0 != bin_encode_gba_4bpp(p_rom_gfx,
+                                     p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_SNES_4BPP == image_mode) {
+    else if (BIN_MODE_SNES_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != snesbin_encode_to_indexed_snes_4bpp(ptr_source_image_data,
-                                                     source_width,
-                                                     source_height,
-                                                     ptr_output_size,
-                                                     ptr_ptr_output_data,
-                                                     image_mode))
+        if (0 != bin_encode_snes_4bpp(p_rom_gfx,
+                                      p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_GGSMSWSC_4BPP == image_mode) {
+    else if (BIN_MODE_GGSMSWSC_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_ggsmswsc_4bpp(ptr_source_image_data,
-                                                     source_width,
-                                                     source_height,
-                                                     ptr_output_size,
-                                                     ptr_ptr_output_data,
-                                                     image_mode))
+        if (0 != bin_encode_ggsmswsc_4bpp(p_rom_gfx,
+                                          p_app_gfx))
             return -1;
     }
-    else if (BIN_MODE_GENS_4BPP == image_mode) {
+    else if (BIN_MODE_GENS_4BPP == p_app_gfx->image_mode) {
 
-        if (0 != bin_encode_to_indexed_gens_4bpp(ptr_source_image_data,
-                                                 source_width,
-                                                 source_height,
-                                                 ptr_output_size,
-                                                 ptr_ptr_output_data,
-                                                 image_mode))
+        if (0 != bin_encode_gens_4bpp(p_rom_gfx,
+                                      p_app_gfx))
             return -1;
     }
     else {

@@ -19,5 +19,5 @@
 =======================================================================*/
 
 
-int snesbin_decode_to_indexed_snesgb_2bpp(void *, long int, int *, int *, unsigned char **, unsigned char **, int *, int);
-int snesbin_encode_to_indexed_snesgb_2bpp(unsigned char *, int, int, long int *, unsigned char **, int);
+int bin_decode_snesgb_2bpp(rom_gfx_data *, app_gfx_data *, app_color_data *);
+int bin_encode_snesgb_2bpp(rom_gfx_data *, app_gfx_data *);

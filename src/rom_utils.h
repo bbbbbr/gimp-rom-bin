@@ -22,7 +22,9 @@
 
 #include "lib_rom_bin.h"
 
+    long int romimg_calc_encoded_size(app_gfx_data *, rom_gfx_attrib);
     void romimg_calc_image_size(long int,  app_gfx_data *, rom_gfx_attrib);
+
     int romimg_insert_color_to_map(unsigned char, unsigned char, unsigned char, app_color_data *);
     int romimg_load_color_data(app_color_data *);
 
