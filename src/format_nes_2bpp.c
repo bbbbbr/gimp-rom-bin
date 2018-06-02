@@ -30,7 +30,7 @@
 #define NES_PIXELS_PER_WORD_2BPP           8    // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo...hi byte)
 #define NES_BYTE_GAP_LOHI_PLANES_2BPP      8    // In 2bpp mode there is an 8 byte offset between the Low and High bytes
 
-#define DECODED_IMAGE_BYTES_PER_PIXEL       1    // 1 byte per pixel in indexed color mode
+#define DECODED_IMAGE_BYTES_PER_PIXEL      BIN_BITDEPTH_INDEXED_ALPHA
 
 
 // TODO: move into function?
@@ -89,6 +89,8 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
     unsigned char pixdata[2];
     unsigned char * p_image_pixel;
     long int      offset;
+    long int      tile_size_in_bytes;
+    unsigned char rom_ended;
 
     // Check incoming buffers & vars
     if ((p_rom_gfx->p_data  == NULL) ||
@@ -98,40 +100,57 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
         return -1;
 
 
-    // Make sure there is enough image data
-    // then copy it into the image buffer
-    // File size is a function of bits per pixel, width and height
-    if (p_rom_gfx->size < ((p_app_gfx->width / (8 / rom_attrib.BITS_PER_PIXEL)) * p_app_gfx->height))
-        return -1;
-
-
     // Un-bitpack the pixels
     // Decode the image top-to-bottom
 
     // Set the output buffer at the start
     offset = 0;
+    rom_ended = FALSE;
+    tile_size_in_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT) / (8 / rom_attrib.BITS_PER_PIXEL));
 
     for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
         for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+
+            // Set a flag if there isn't enough rom image data left
+            // to read a complete tile. This can happen if the number
+            // of tiles and their size isn't an even multiple of the
+            // total image width
+            //
+            // Any extra bytes which don't get decoded are stored as
+            // a Gimp metadata parasite attached to the image. Those
+            // get retrieved during export/save and re-appended.
+            //
+            // The remaining tiles in the image are set to transparent
+            // to indicate they don't contain data (and later shouldn't
+            // be used to encode data)
+            if ( (offset + tile_size_in_bytes) > p_rom_gfx->size)
+                rom_ended = TRUE;
+
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
-                // Read two bytes and unpack the 8 horizontal pixels
-                pixdata[0] = *(p_rom_gfx->p_data + offset);
-                pixdata[1] = *(p_rom_gfx->p_data + offset + NES_BYTE_GAP_LOHI_PLANES_2BPP);
-
                 // Set up the pointer to the pixel in the destination image buffer
-                p_image_pixel = (p_app_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_app_gfx->width)
-                                              +   (x * rom_attrib.TILE_PIXEL_WIDTH));
+                p_image_pixel = romimg_calc_appimg_offset(x, y, ty, p_app_gfx, rom_attrib);
+
+                if (!rom_ended) {
+                    // Read two bytes and unpack the 8 horizontal pixels
+                    pixdata[0] = *(p_rom_gfx->p_data + offset);
+                    pixdata[1] = *(p_rom_gfx->p_data + offset + NES_BYTE_GAP_LOHI_PLANES_2BPP);
+                }
 
                 // Unpack the 8 horizontal pixels
                 for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
                     // pixel[0].n = b.0, pixel[1].n = b.1
                     *p_image_pixel = ((pixdata[0] >> 7) & 0x01) | ((pixdata[1] >> 6) & 0x02);
 
+                    if (!rom_ended)
+                        *(p_image_pixel + 1) = 255; // Set Alpha mask byte to VISIBLE (pixel stores valid rom data)
+                    else
+                        *(p_image_pixel + 1) = 0; // Set Alpha mask byte to TRANSPARENT (pixel does not contain valid rom data)
+
                     // Advance to the next pixel
-                    p_image_pixel++;
+                    p_image_pixel += p_app_gfx->bytes_per_pixel;
 
                     // Upshift bits to prepare for the next pixel
                     pixdata[0] <<= 1;
@@ -158,6 +177,8 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
     unsigned char pixdata[2];
     unsigned char * p_image_pixel;
     long int      offset;
+    unsigned int  transparency_flag;
+    long int      empty_tile_count;
 
     // Check incoming buffers & vars
     if ((p_app_gfx->p_data == NULL) ||
@@ -169,35 +190,48 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
 
 
     // Make sure there is enough size in the output buffer
-    if (p_rom_gfx->size < (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL))
+    if (p_rom_gfx->size < (p_app_gfx->width * p_app_gfx->height) / (8 / rom_attrib.BITS_PER_PIXEL)) {
+        printf("bin_encode_image, encoded buffer too small\n");
         return -1;
+    }
 
     // Encode the image top-to-bottom
 
     // Set the output buffer at the start
     offset = 0;
+    empty_tile_count = 0;
 
     for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
         for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+
+            // Reset Transparency flag for the upcoming tile
+            transparency_flag = 0;
+
             // Decode the 8x8 tile top to bottom
             for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the source image buffer
-                p_image_pixel = (p_app_gfx->p_data + (((y * rom_attrib.TILE_PIXEL_HEIGHT) + ty) * p_app_gfx->width)
-                                                         +   (x * rom_attrib.TILE_PIXEL_WIDTH));
+                p_image_pixel = romimg_calc_appimg_offset(x, y, ty, p_app_gfx, rom_attrib);
+
                 pixdata[0] = 0;
                 pixdata[1] = 0;
 
                 // Read in and pack 8 horizontal pixels into two bytes
                 for (int b=0;b < NES_PIXELS_PER_WORD_2BPP; b++) {
 
+                    // Found a transparent pixel in the non-encoded image, so this
+                    // tile may be past the end of valid ROM data. Flag for later
+                    if ((BIN_BITDEPTH_INDEXED_ALPHA == p_app_gfx->bytes_per_pixel)
+                        && (*(p_image_pixel + 1) == 0))
+                        transparency_flag++;
+
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
                     pixdata[0] = (pixdata[0] << 1) |  ( (*p_image_pixel) & 0x01);
                     pixdata[1] = (pixdata[1] << 1) | (( (*p_image_pixel) & 0x02) >> 1);
 
                     // Advance to next pixel
-                    p_image_pixel++;
+                    p_image_pixel += p_app_gfx->bytes_per_pixel;
                 }
 
                 // Save the two packed bytes. LS Bits then MS Bits (MS Bits are 8 bytes later)
@@ -208,12 +242,31 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
                 offset++;
             }
 
+            // Transparent pixels in a tile indicate that this is
+            // past the end of valid ROM data. This will get removed
+            // from total ROM size later.
+            // This can happen if the number of tiles in a rom and
+            // their size aren't an even multiple of the total image width
+            if ((BIN_BITDEPTH_INDEXED_ALPHA == p_app_gfx->bytes_per_pixel)
+               && (transparency_flag >= (rom_attrib.TILE_PIXEL_HEIGHT * rom_attrib.TILE_PIXEL_WIDTH))) {
+                empty_tile_count++;
+            }
+
+
             // Now advance to the start of the next tile
             // The pointer is in the middle of the current tile (8 of 16 bytes),
             // so increment by another 8 bytes to get to the start of the next tile
             offset += NES_BYTE_GAP_LOHI_PLANES_2BPP;
         }
     }
+
+
+    // Substract transparent/empty tiles from rom image file size (see above)
+    long int tile_size_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT)
+                                / (8 / rom_attrib.BITS_PER_PIXEL));
+
+
+    p_rom_gfx->size -= (empty_tile_count * tile_size_bytes);
 
     // Return success
     return 0;
@@ -228,8 +281,14 @@ int bin_decode_nes_2bpp(rom_gfx_data * p_rom_gfx,
     // Calculate width and height
     romimg_calc_decoded_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
 
+
+    // Set aside any surplus bytes if present
+    if (0 != romimg_stash_surplus_bytes(p_app_gfx,
+                                        p_rom_gfx))
+        return -1;
+
     // Allocate the incoming image buffer, abort if it fails
-    if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height)) )
+    if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height * p_app_gfx->bytes_per_pixel)) )
         return -1;
 
 
@@ -273,9 +332,14 @@ int bin_encode_nes_2bpp(rom_gfx_data * p_rom_gfx,
 
     // Encode the image data
     if (0 != bin_encode_image(p_rom_gfx,
-                              p_app_gfx));
+                              p_app_gfx)) // TODO: there was a semicolon here- remove it from any other files with the same mistake
         return -1;
 
+
+    // Append any surplus bytes if present
+    if (0 != romimg_append_surplus_bytes(p_app_gfx,
+                                         p_rom_gfx))
+        return -1;
 
     // Return success
     return 0;

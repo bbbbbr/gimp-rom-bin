@@ -22,8 +22,13 @@
 
 #include "lib_rom_bin.h"
 
+    unsigned char * romimg_calc_appimg_offset(int, int, int, app_gfx_data *, rom_gfx_attrib);
+
     long int romimg_calc_encoded_size(app_gfx_data *, rom_gfx_attrib);
-    void romimg_calc_decoded_size(long int,  app_gfx_data *, rom_gfx_attrib);
+    void romimg_calc_decoded_size(long int, app_gfx_data *, rom_gfx_attrib);
+
+    int romimg_stash_surplus_bytes(app_gfx_data *, rom_gfx_data *);
+    int romimg_append_surplus_bytes(app_gfx_data *, rom_gfx_data *);
 
     int romimg_insert_color_to_map(unsigned char, unsigned char, unsigned char, app_color_data *);
     int romimg_load_color_data(app_color_data *);

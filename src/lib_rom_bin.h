@@ -41,6 +41,12 @@
         BIN_MODE_LAST
     };
 
+    enum rom_bin_pixel_modes {
+        BIN_BITDEPTH_INDEXED = 1,
+        BIN_BITDEPTH_INDEXED_ALPHA = 2,
+        BIN_BITDEPTH_LAST
+    };
+
     // TODO: move these to lib_rom_bin.h
 
         typedef struct rom_gfx_attrib {
@@ -61,6 +67,9 @@
             unsigned char  * p_data;
             unsigned char    bytes_per_pixel;
             int              size;
+
+            long int         surplus_bytes_size;
+            unsigned char  * p_surplus_bytes;
         }  app_gfx_data;
 
         typedef struct rom_gfx_data {

@@ -141,15 +141,15 @@ void query()
     // Register the load handlers
     gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
 
-    // Additional NES handler for ".chr" format files
-    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP_CHR, "chr", "");
+    // Additional NES handler for ".chr" format files and NES ROM files
+    gimp_register_load_handler(LOAD_PROCEDURE_NES_2BPP_CHR, "chr,nes", "");
 
 
     // Now register the save handlers
     gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
 
-    // Additional NES handler for ".chr" format files
-    gimp_register_save_handler(SAVE_PROCEDURE_NES_2BPP_CHR, "chr", "");
+    // Additional NES handler for ".chr" format files and NES ROM files
+    gimp_register_save_handler(SAVE_PROCEDURE_NES_2BPP_CHR, "chr,nes", "");
 
     // MIME handler registration is disabled for now, due to non-interactive
     //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
@@ -263,7 +263,8 @@ void run(const gchar * name,
         export_ret = gimp_export_image(&image_id,
                                        &drawable_id,
                                        "BIN",
-                                       GIMP_EXPORT_CAN_HANDLE_INDEXED);
+                                       GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                       GIMP_EXPORT_CAN_HANDLE_ALPHA);
 
         switch(export_ret)
         {
@@ -285,7 +286,7 @@ void run(const gchar * name,
               }
 
                 status = write_rom_bin(param[3].data.d_string,
-                                       drawable_id, image_mode);
+                                       image_id, drawable_id, image_mode);
                 gimp_image_delete(image_id);
 
                 break;

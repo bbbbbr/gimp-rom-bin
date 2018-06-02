@@ -22,15 +22,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <libgimp/gimp.h>
 
-int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
+int write_rom_bin(const gchar * filename, gint image_id, gint drawable_id, int image_mode)
 {
     int status = 1;
 
     GimpDrawable * drawable;
-    gint bpp;
+    gint bytes_per_pixel;
     GimpPixelRgn rgn;
+    GimpParasite * img_parasite;
 
     FILE * file;
 
@@ -47,12 +49,12 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
 
-    // Get the BPP
-    // This should be 1 byte per pixel (INDEXED)
-    bpp = gimp_drawable_bpp(drawable_id);
+    // Get the Bytes Per Pixel of the incoming app image
+    app_gfx.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
 
-    // Abort if it's not 1 Byte Per Pixel
-    if (1 != bpp) {
+    // Abort if it's not 1 or 2 bytes per pixel
+    // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
+    if (app_gfx.bytes_per_pixel >= BIN_BITDEPTH_LAST) {
         return 0;
     }
 
@@ -68,7 +70,7 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
     // Determine the array size for the app's image then allocate it
     app_gfx.width   = drawable->width;
     app_gfx.height  = drawable->height;
-    app_gfx.size    =  drawable->width * drawable->height * bpp;
+    app_gfx.size    =  drawable->width * drawable->height * app_gfx.bytes_per_pixel;
     app_gfx.p_data  = malloc(app_gfx.size);
 
     // Get the image data
@@ -78,13 +80,40 @@ int write_rom_bin(const gchar * filename, gint drawable_id, int image_mode)
                             drawable->width,
                             drawable->height);
 
+
+
+    // TODO: move parasite metadata handling into a function?
+    img_parasite = gimp_image_get_parasite(image_id,
+                                           "ROM-BIN-SURPLUS-BYTES");
+
+    if (img_parasite) {
+        printf("Found parasite size %d\n", img_parasite->size);
+
+        // Load surplus (non-encodable) bytes stashed in the gimp metadata parasite
+        app_gfx.surplus_bytes_size = img_parasite->size;
+
+        if (NULL == (app_gfx.p_surplus_bytes = malloc(app_gfx.surplus_bytes_size)) ) {
+            // TODO: handle and centralize freeing these buffers better
+            free(app_gfx.p_data);
+            free(app_gfx.p_surplus_bytes);
+            free(rom_gfx.p_data);
+            return 0;
+        }
+
+        memcpy(app_gfx.p_surplus_bytes,
+               (unsigned char *)img_parasite->data,
+               img_parasite->size);
+    }
+
+
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
     status = rom_bin_encode(&rom_gfx,
-                           &app_gfx);
+                            &app_gfx);
 
 
     // Free the image data
     free(app_gfx.p_data);
+    free(app_gfx.p_surplus_bytes);
 
     // Detach the drawable
     gimp_drawable_detach(drawable);

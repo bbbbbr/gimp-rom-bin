@@ -42,7 +42,8 @@ int read_rom_bin(const gchar * filename, int image_mode)
 
     rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
 
-    app_gfx.image_mode = image_mode;
+    app_gfx.image_mode      = image_mode;
+    app_gfx.bytes_per_pixel = BIN_BITDEPTH_INDEXED_ALPHA;
 
 
     // Try to open the file
@@ -100,7 +101,7 @@ int read_rom_bin(const gchar * filename, int image_mode)
     new_layer_id = gimp_layer_new(new_image_id,
                                   "Background",
                                   app_gfx.width, app_gfx.height,
-                                  GIMP_INDEXED_IMAGE,
+                                  GIMP_INDEXEDA_IMAGE,
                                   100,
                                   GIMP_NORMAL_MODE);
 
@@ -123,6 +124,23 @@ int read_rom_bin(const gchar * filename, int image_mode)
                             app_gfx.p_data,
                             0, 0,
                             app_gfx.width, app_gfx.height);
+
+
+
+    if ((app_gfx.surplus_bytes_size > 0) &&
+        (app_gfx.p_surplus_bytes != NULL)) {
+
+        // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
+        gimp_image_attach_new_parasite  (new_image_id,
+                                         "ROM-BIN-SURPLUS-BYTES",
+                                          GIMP_PARASITE_PERSISTENT,
+                                          app_gfx.surplus_bytes_size,
+                                          app_gfx.p_surplus_bytes);
+
+        // Free the surplus bytes now that they are stored as a parasite
+        free(app_gfx.p_surplus_bytes);
+    }
+
 
     // We're done with the drawable
     gimp_drawable_flush(drawable);

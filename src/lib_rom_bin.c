@@ -73,12 +73,16 @@ void rom_bin_init_structs(rom_gfx_data * p_rom_gfx,
     p_app_gfx->width      = 0;
     p_app_gfx->height     = 0;
     p_app_gfx->p_data     = NULL;
-    p_app_gfx->size   = 0;
+    p_app_gfx->size       = 0;
+    p_app_gfx->p_surplus_bytes    = NULL;
+    p_app_gfx->surplus_bytes_size = 0;
+
 
     p_colorpal->index           = 0;
     p_colorpal->bytes_per_pixel = 0;
     p_colorpal->size            = 0;
     p_colorpal->p_data          = NULL;
+
 
     p_rom_gfx->size   = 0;
     p_rom_gfx->p_data = NULL;
