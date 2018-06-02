@@ -246,9 +246,9 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
 
 
 
-int bin_decode_ngp_2bpp(rom_gfx_data * p_rom_gfx,
-                        app_gfx_data * p_app_gfx,
-                        app_color_data * p_colorpal)
+int bin_decode_ngpc_2bpp(rom_gfx_data * p_rom_gfx,
+                         app_gfx_data * p_app_gfx,
+                         app_color_data * p_colorpal)
 {
     // Calculate width and height
     romimg_calc_decoded_size(p_rom_gfx->size, p_app_gfx, rom_attrib);
@@ -288,8 +288,8 @@ int bin_decode_ngp_2bpp(rom_gfx_data * p_rom_gfx,
 }
 
 
-int bin_encode_ngp_2bpp(rom_gfx_data * p_rom_gfx,
-                        app_gfx_data * p_app_gfx)
+int bin_encode_ngpc_2bpp(rom_gfx_data * p_rom_gfx,
+                         app_gfx_data * p_app_gfx)
 {
     // TODO: Warn if number of colors > expected
 

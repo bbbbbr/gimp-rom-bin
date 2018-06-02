@@ -19,5 +19,5 @@
 =======================================================================*/
 
 
-int bin_decode_ngp_2bpp(rom_gfx_data *, app_gfx_data *, app_color_data *);
-int bin_encode_ngp_2bpp(rom_gfx_data *, app_gfx_data *);
+int bin_decode_ngpc_2bpp(rom_gfx_data *, app_gfx_data *, app_color_data *);
+int bin_encode_ngpc_2bpp(rom_gfx_data *, app_gfx_data *);
