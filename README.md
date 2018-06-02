@@ -1,9 +1,9 @@
 gimp file-rom-bin plugin
 ===========
 
-GIMP plugin for reading, writing and converting ROM .bin and .chr image (tile) files. Useful in the emulation world for ROM mods, hacks and extracting/inserting artwork.
+GIMP plugin for reading, writing and converting ROM images and tile files. Useful in emolation ROM modding, hacks and extracting/inserting artwork.
 
-Supported formats: 
+Supported image formats: 
  * NES 1bpp
  * NES 2bpp
  * SNES/GB 2bpp
@@ -13,6 +13,12 @@ Supported formats:
  * GG/SMS/WSC 4bpp 
  * MD 4bpp
  
+Supported file extensions:
+ * .bin
+ * .chr (nes 2bpp)
+ * .nes (nes 2bpp)
+ * .gb (gb 2bpp)
+
 
 ## Acknowledgement:
  * Source uses some webp gimp plugin code from Nathan Osman (Copyright 2012)
@@ -33,7 +39,7 @@ gimptool-2.0 --install file-rom-binfile.c
 ## Known limitations & Issues:
 * Palettes: Does not yet import palettes and defaults to internal standard palettes. Which can then be changed using the GIMP color map and Palette tools.
 
-* Image size: Image width and height must be even multiples of 8 (the ROM image tile size, 8x8). If they aren't import and export will fail (quietly, for now).
+* Image size: ROMs and tile files that are not an even multiple of tile width will get padded with transparent pixels at the end of the image, and have any trailing data stored as gimp image metadata. The plugin will attempt to preserve original file size and integrity as much as possible. Setting transparent pixels (in tiles) at the end of the image to non-transparent will cause those tiles to get written to the file and therefore increase the file size. Be careful. 
 
 
 ## GIMP usage hints:
