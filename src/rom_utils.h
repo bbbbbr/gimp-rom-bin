@@ -22,6 +22,10 @@
 
 #include "lib_rom_bin.h"
 
+    void romimg_log_transparent_tiles(unsigned int , unsigned int *, app_gfx_data *, rom_gfx_attrib);
+    void romimg_log_transparent_pixel(unsigned char *, unsigned int *,  app_gfx_data *);
+    void romimg_set_decoded_pixel_and_advance(unsigned char **, unsigned char, unsigned char, app_gfx_data *);
+
     unsigned char * romimg_calc_appimg_offset(int, int, int, app_gfx_data *, rom_gfx_attrib);
 
     long int romimg_calc_encoded_size(app_gfx_data *, rom_gfx_attrib);

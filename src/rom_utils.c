@@ -22,13 +22,56 @@
 #include <string.h>
 
 
-unsigned char * romimg_calc_appimg_offset(int x, int y, int tile_y, app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib) {
+void romimg_log_transparent_tiles(unsigned int transparency_flag, unsigned int * p_empty_tile_count, app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
+{
+    // Transparent pixels in a tile indicate that this is
+    // past the end of valid ROM data. This will get removed
+    // from total ROM size later.
+    // This can happen if the number of tiles in a rom and
+    // their size aren't an even multiple of the total image width
+    if ((BIN_BITDEPTH_INDEXED_ALPHA == p_app_gfx->bytes_per_pixel)
+       && (transparency_flag >= (rom_attrib.TILE_PIXEL_HEIGHT * rom_attrib.TILE_PIXEL_WIDTH))) {
+        (*p_empty_tile_count)++;
+    }
+}
 
+
+void romimg_log_transparent_pixel(unsigned char * p_image_pixel, unsigned int * p_transparency_flag,  app_gfx_data * p_app_gfx)
+{
+    // Found a transparent pixel in the non-encoded image, so this
+    // tile may be past the end of valid ROM data. Flag for later
+    if ((BIN_BITDEPTH_INDEXED_ALPHA == p_app_gfx->bytes_per_pixel)
+        && (*(p_image_pixel + 1) == 0))
+        (*p_transparency_flag)++;
+}
+
+
+void romimg_set_decoded_pixel_and_advance(unsigned char ** pp_image_pixel, unsigned char pixel_val, unsigned char is_transparent, app_gfx_data * p_app_gfx)
+{
+    // Set the image pixel
+    **pp_image_pixel = pixel_val;
+
+    // If the image has an transparency alpha mask
+    // then set transparency as needed
+    if (BIN_BITDEPTH_INDEXED_ALPHA == p_app_gfx->bytes_per_pixel) {
+        if (is_transparent)
+            *(*(pp_image_pixel) + 1) = 0;   // Set Alpha mask byte to TRANSPARENT (pixel does not contain valid rom data)
+        else
+            *(*(pp_image_pixel) + 1) = 255; // Set Alpha mask byte to VISIBLE (pixel stores valid rom data)
+    }
+
+    // Advance to next pixel in the buffer factoring in bytes depth
+    *pp_image_pixel += p_app_gfx->bytes_per_pixel;
+}
+
+
+unsigned char * romimg_calc_appimg_offset(int x, int y, int tile_y, app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
+{
     // Calculate pointer location in image buffer based on x,y and tile y
     return(p_app_gfx->p_data
            + (p_app_gfx->bytes_per_pixel
               * ( (((y * rom_attrib.TILE_PIXEL_HEIGHT) + tile_y) * p_app_gfx->width)
-                                       + (x * rom_attrib.TILE_PIXEL_WIDTH)) ) );
+                  + (x * rom_attrib.TILE_PIXEL_WIDTH)) ) );
 }
 
 

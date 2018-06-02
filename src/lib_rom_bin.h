@@ -56,7 +56,7 @@
             unsigned char BITS_PER_PIXEL;
 
             unsigned char DECODED_NUM_COLORS;
-            unsigned char DECODED_BYTES_PER_PIXEL;
+            unsigned char DECODED_BYTES_PER_COLOR;
         } rom_gfx_attrib;
 
 
