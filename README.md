@@ -3,6 +3,9 @@ gimp file-rom-bin plugin
 
 GIMP plugin for reading, writing and converting ROM images and tile files. Useful in emolation ROM modding, hacks and extracting/inserting artwork.
 
+![GIMP Image Editor opening Super Nintendo Image Tiles](https://raw.githubusercontent.com/bbbbbr/gimp-rom-bin/master/info/gimp-rom-image-plugin.png)
+
+
 Supported image formats: 
  * NES 1bpp
  * NES 2bpp
