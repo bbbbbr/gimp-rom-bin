@@ -27,15 +27,15 @@
 
 int write_rom_bin(const gchar * filename, gint image_id, gint drawable_id, int image_mode)
 {
-    int status = 1;
+    int status;
 
     GimpDrawable * drawable;
-    gint bytes_per_pixel;
     GimpPixelRgn rgn;
     GimpParasite * img_parasite;
 
     FILE * file;
 
+    status = 0; // Default to success
 
     app_gfx_data   app_gfx;
     app_color_data colorpal; // TODO: rename to app_colorpal?
@@ -106,9 +106,11 @@ int write_rom_bin(const gchar * filename, gint image_id, gint drawable_id, int i
     }
 
 
-    // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
+
     status = rom_bin_encode(&rom_gfx,
                             &app_gfx);
+    // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
+    if (status != 0) { };
 
 
     // Free the image data

@@ -32,6 +32,7 @@ int read_rom_bin(const gchar * filename, int image_mode)
            new_layer_id;
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
+    GimpParasite * parasite;
 
     FILE * file;
 
@@ -131,11 +132,13 @@ int read_rom_bin(const gchar * filename, int image_mode)
         (app_gfx.p_surplus_bytes != NULL)) {
 
         // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
-        gimp_image_attach_new_parasite  (new_image_id,
-                                         "ROM-BIN-SURPLUS-BYTES",
-                                          GIMP_PARASITE_PERSISTENT,
-                                          app_gfx.surplus_bytes_size,
-                                          app_gfx.p_surplus_bytes);
+         parasite = gimp_parasite_new("ROM-BIN-SURPLUS-BYTES",
+                                       GIMP_PARASITE_PERSISTENT,
+                                       app_gfx.surplus_bytes_size,
+                                       app_gfx.p_surplus_bytes);
+         gimp_image_attach_parasite(new_image_id, 
+                                    parasite);
+         gimp_parasite_free (parasite);
 
         // Free the surplus bytes now that they are stored as a parasite
         free(app_gfx.p_surplus_bytes);
@@ -153,7 +156,7 @@ int read_rom_bin(const gchar * filename, int image_mode)
     free(colorpal.p_data);
 
     // Add the layer to the image
-    gimp_image_add_layer(new_image_id, new_layer_id, 0);
+    gimp_image_insert_layer(new_image_id, new_layer_id, -1, 0);
 
     // Set the filename
     gimp_image_set_filename(new_image_id, filename);

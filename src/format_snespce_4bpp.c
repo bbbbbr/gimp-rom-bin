@@ -20,6 +20,7 @@
 
 #include "lib_rom_bin.h"
 #include "rom_utils.h"
+#include "format_snespce_4bpp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,6 +99,8 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
     long int      tile_size_in_bytes;
     unsigned char rom_ended;
 
+    int x,y,ty,b;
+
     // Check incoming buffers & vars
     if ((p_rom_gfx->p_data  == NULL) ||
         (p_app_gfx->p_data  == NULL) ||
@@ -114,9 +117,9 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
     rom_ended = FALSE;
     tile_size_in_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT) / (8 / rom_attrib.BITS_PER_PIXEL));
 
-    for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
+    for (y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
-        for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+        for (x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
 
             // Set a flag if there isn't enough rom image data left
             // to read a complete tile. This can happen if the number
@@ -134,7 +137,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
                 rom_ended = TRUE;
 
             // Decode the 8x8 tile top to bottom
-            for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
+            for (ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the destination image buffer
                 p_image_pixel = romimg_calc_appimg_offset(x, y, ty, p_app_gfx, rom_attrib);
@@ -152,7 +155,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
                 }
         
                 // Unpack the 8 horizontal pixels
-                for (int b=0;b < SNES_PIXELS_PER_DWORD_4BPP; b++) {
+                for (b=0;b < SNES_PIXELS_PER_DWORD_4BPP; b++) {
 
                     // b0.MSbit = pixel.1, b1.MSbit = pixel.0
                     pixel_val = ((pixdata[0] >> 7) & 0x01) |
@@ -195,6 +198,9 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
     long int      rom_offset;
     unsigned int  transparency_flag;
     unsigned int  empty_tile_count;
+    long int tile_size_bytes;
+
+    int x,y,ty,b;
 
     // Check incoming buffers & vars
     if ((p_app_gfx->p_data == NULL) ||
@@ -211,15 +217,15 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
     rom_offset = 0;
     empty_tile_count = 0;
 
-    for (int y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
+    for (y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
         // Decode left-to-right
-        for (int x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
+        for (x=0; x < (p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH); x++) {
 
             // Reset transparency_flag for the upcoming tile
             transparency_flag = 0;
 
             // Decode the 8x8 tile top to bottom
-            for (int ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
+            for (ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
 
                 // Set up the pointer to the pixel in the source image buffer
                 p_image_pixel = romimg_calc_appimg_offset(x, y, ty, p_app_gfx, rom_attrib);
@@ -231,7 +237,7 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
 
                 // Read in and pack 8 horizontal pixels into four bytes
                 // The bytes are in pairs, the second pair is 14 bytes later
-                for (int b=0;b < SNES_PIXELS_PER_DWORD_4BPP; b++) {
+                for (b=0;b < SNES_PIXELS_PER_DWORD_4BPP; b++) {
 
                     // dest[0].0 = source.0 ... dest[3].0 = source.3
                     pixdata[0] = (pixdata[0] << 1) |  ( (*p_image_pixel) & 0x01);
@@ -269,8 +275,8 @@ static int bin_encode_image(rom_gfx_data * p_rom_gfx,
 
 
     // Substract transparent/empty tiles from rom image file size (see above)
-    long int tile_size_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT)
-                                / (8 / rom_attrib.BITS_PER_PIXEL));
+    tile_size_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT)
+                       / (8 / rom_attrib.BITS_PER_PIXEL));
 
 
     p_rom_gfx->size -= (empty_tile_count * tile_size_bytes);

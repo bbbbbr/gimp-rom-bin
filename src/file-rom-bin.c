@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include <stdint.h>
+
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
@@ -38,8 +39,8 @@ const char SAVE_PROCEDURE_GB2BPP_GB[] = "file-rom-bin-save-gb2bpp-gb";
 const char BINARY_NAME[]    = "file-rom-bin";
 
 // Predeclare our entrypoints
-void query();
-void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
+static void query(void);
+static void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
 
 // Declare our plugin entry points
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -52,7 +53,7 @@ GimpPlugInInfo PLUG_IN_INFO = {
 MAIN()
 
 // The query function
-void query()
+static void query(void)
 {
     // Load arguments
     static const GimpParamDef load_arguments[] =
@@ -197,7 +198,7 @@ void query()
 }
 
 // The run function
-void run(const gchar * name,
+static void run(const gchar * name,
          gint nparams,
          const GimpParam * param,
          gint * nreturn_vals,

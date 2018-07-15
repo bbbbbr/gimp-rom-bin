@@ -19,6 +19,7 @@
 // TODO: rename to settings-dialog.c/h
 
 #include "lib_rom_bin.h"
+#include "export-dialog.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +36,8 @@ struct rom_bin_data {
     GtkWidget * image_mode_combo;
     int       * image_mode;
 };
+
+void on_response(GtkDialog *, gint, gpointer);
 
 void on_response(GtkDialog * dialog,
                  gint response_id,
@@ -90,7 +93,6 @@ int export_dialog(int * image_mode, const gchar * name)
     GtkWidget * dialog;
     GtkWidget * vbox;
     GtkWidget * label;
-    GtkWidget * table;
 
     GtkWidget * image_mode_combo;
 
@@ -129,7 +131,7 @@ int export_dialog(int * image_mode, const gchar * name)
     // Create the VBox
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
                        vbox, TRUE, TRUE, 2);
     gtk_widget_show(vbox);
 
