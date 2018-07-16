@@ -21,6 +21,10 @@ Supported file extensions:
  * .chr (nes 2bpp)
  * .nes (nes 2bpp)
  * .gb (gb 2bpp)
+ 
+ OS binaries available for: 
+ * Linux
+ * Windows
 
 
 ## Acknowledgement:
@@ -31,12 +35,17 @@ Supported file extensions:
 
 ## Quick instructions:
 
-Compile/install it on Unix / Linux using:
+Native compile/install on Linux using below.
 
 ```
 gimptool-2.0 --install file-rom-binfile.c
     or
- make (and then copy to your GIMP plugin folder)
+ make (and then copy to your GIMP plugin folder, depends on version)
+
+Plug-in folder locations:
+ Linux: ~/.gimp-2.8/plug-ins
+ Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
+
 ```
 
 ## Known limitations & Issues:
