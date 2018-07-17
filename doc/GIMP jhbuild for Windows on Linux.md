@@ -3,7 +3,7 @@ Cross compiling GIMP stable for Windows (mingw32) on Debian Linux 8 in a VM
 
 Many of the how-to docs for cross compiling GIMP binaries for Windows on a Linux host appear to be out of date or broken (crossroad, MinGW-w64). 
 
-The most up-to-date how-to at this time is on the GIMP gitlab site (which also hosts their CI setup, another useful reference). That site happens to not be indexed by Google, making it harder to stumble across.
+The most up-to-date how-to at this time is on the GIMP gitlab site (which also hosts their CI setup, another useful reference). The build from that source (at least for GIMP stable) also has some breakage- just less than others. The site happens to not be indexed by Google, so it's harder to stumble across. 
 * https://gitlab.gnome.org/GNOME/gimp/tree/master/build/windows/jhbuild
 
 This is a walk-through of how to set up the build environment, fix the bugs errors that crop up and do a full build of GIMP stable.
