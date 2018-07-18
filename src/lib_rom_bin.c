@@ -24,10 +24,16 @@
 #include "format_nes_2bpp.h"
 #include "format_snesgb_2bpp.h"
 #include "format_ngp_2bpp.h"
+
+#include "format_snes_3bpp.h"
+
 #include "format_gba_4bpp.h"
 #include "format_snespce_4bpp.h"
 #include "format_ggsmswsc_4bpp.h"
 #include "format_gens_4bpp.h"
+
+#include "format_gba_8bpp.h"
+#include "format_snes_8bpp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,10 +50,16 @@ static int (*function_map_decode[])(rom_gfx_data *,
         [BIN_MODE_NES_2BPP]      = bin_decode_nes_2bpp,
         [BIN_MODE_SNESGB_2BPP]   = bin_decode_snesgb_2bpp,
         [BIN_MODE_NGPC_2BPP]     = bin_decode_ngpc_2bpp,
+
+        [BIN_MODE_SNES_3BPP]     = bin_decode_snes_3bpp,
+
         [BIN_MODE_GBA_4BPP]      = bin_decode_gba_4bpp,
         [BIN_MODE_SNES_4BPP]     = bin_decode_snes_4bpp,
         [BIN_MODE_GGSMSWSC_4BPP] = bin_decode_ggsmswsc_4bpp,
         [BIN_MODE_GENS_4BPP]     = bin_decode_gens_4bpp,
+
+        [BIN_MODE_GBA_8BPP]      = bin_decode_gba_8bpp,
+        [BIN_MODE_SNES_8BPP]     = bin_decode_snes_8bpp,
 };
 
 
@@ -57,10 +69,16 @@ static int (*function_map_encode[])(rom_gfx_data *,
         [BIN_MODE_NES_2BPP]      = bin_encode_nes_2bpp,
         [BIN_MODE_SNESGB_2BPP]   = bin_encode_snesgb_2bpp,
         [BIN_MODE_NGPC_2BPP]     = bin_encode_ngpc_2bpp,
+
+        [BIN_MODE_SNES_3BPP]     = bin_encode_snes_3bpp,
+
         [BIN_MODE_GBA_4BPP]      = bin_encode_gba_4bpp,
         [BIN_MODE_SNES_4BPP]     = bin_encode_snes_4bpp,
         [BIN_MODE_GGSMSWSC_4BPP] = bin_encode_ggsmswsc_4bpp,
         [BIN_MODE_GENS_4BPP]     = bin_encode_gens_4bpp,
+
+        [BIN_MODE_GBA_8BPP]      = bin_encode_gba_8bpp,
+        [BIN_MODE_SNES_8BPP]     = bin_encode_snes_8bpp,
 };
 
 

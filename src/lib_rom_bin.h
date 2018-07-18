@@ -33,10 +33,16 @@
         BIN_MODE_NES_2BPP,
         BIN_MODE_SNESGB_2BPP,
         BIN_MODE_NGPC_2BPP,
+
+        BIN_MODE_SNES_3BPP,
+
         BIN_MODE_GBA_4BPP,
         BIN_MODE_SNES_4BPP,
         BIN_MODE_GGSMSWSC_4BPP,
         BIN_MODE_GENS_4BPP,
+
+        BIN_MODE_GBA_8BPP,
+        BIN_MODE_SNES_8BPP,
 
         BIN_MODE_LAST
     };
@@ -55,7 +61,7 @@
             unsigned int  TILE_PIXEL_HEIGHT;
             unsigned char BITS_PER_PIXEL;
 
-            unsigned char DECODED_NUM_COLORS;
+            unsigned int  DECODED_NUM_COLORS;
             unsigned char DECODED_BYTES_PER_COLOR;
         } rom_gfx_attrib;
 

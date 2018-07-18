@@ -262,6 +262,17 @@ int romimg_load_color_data(app_color_data * p_colorpal)
         status += romimg_insert_color_to_map(0xAD, 0xB5, 0x31, p_colorpal);
         status += romimg_insert_color_to_map(0xC6, 0xE7, 0x9C, p_colorpal);
     }
+    else if (8 == p_colorpal->size) {
+        status += romimg_insert_color_to_map(0x00, 0x00, 0x00, p_colorpal);
+        status += romimg_insert_color_to_map(0x8c, 0x63, 0x21, p_colorpal);
+        status += romimg_insert_color_to_map(0xAD, 0xB5, 0x31, p_colorpal);
+        status += romimg_insert_color_to_map(0xC6, 0xE7, 0x9C, p_colorpal);
+
+        status += romimg_insert_color_to_map(0xF8, 0xF8, 0x00, p_colorpal);
+        status += romimg_insert_color_to_map(0xF8, 0xC0, 0x00, p_colorpal);
+        status += romimg_insert_color_to_map(0xF8, 0x78, 0x00, p_colorpal);
+        status += romimg_insert_color_to_map(0xF8, 0x00, 0x00, p_colorpal);
+    }
     else if (16 == p_colorpal->size) {
         status += romimg_insert_color_to_map(0x00, 0x00, 0x00, p_colorpal);
         status += romimg_insert_color_to_map(0x8c, 0x63, 0x21, p_colorpal);
@@ -282,6 +293,33 @@ int romimg_load_color_data(app_color_data * p_colorpal)
         status += romimg_insert_color_to_map(0xA8, 0xC0, 0xC8, p_colorpal);
         status += romimg_insert_color_to_map(0x90, 0xA8, 0xB0, p_colorpal);
         status += romimg_insert_color_to_map(0x60, 0x78, 0x90, p_colorpal);
+    }
+    else if (256 == p_colorpal->size) {
+
+
+    // TODO: 256 colors - use #define
+        int c;
+        for (c=0; c < 256/16; c++) {
+            status += romimg_insert_color_to_map(0x00, 0x00, 0x00, p_colorpal);
+            status += romimg_insert_color_to_map(0x8c, 0x63, 0x21, p_colorpal);
+            status += romimg_insert_color_to_map(0xAD, 0xB5, 0x31, p_colorpal);
+            status += romimg_insert_color_to_map(0xC6, 0xE7, 0x9C, p_colorpal);
+
+            status += romimg_insert_color_to_map(0xF8, 0xF8, 0x00, p_colorpal);
+            status += romimg_insert_color_to_map(0xF8, 0xC0, 0x00, p_colorpal);
+            status += romimg_insert_color_to_map(0xF8, 0x78, 0x00, p_colorpal);
+            status += romimg_insert_color_to_map(0xF8, 0x00, 0x00, p_colorpal);
+
+            status += romimg_insert_color_to_map(0xFA, 0xD3, 0x5A, p_colorpal);
+            status += romimg_insert_color_to_map(0x29, 0xA2, 0x29, p_colorpal);
+            status += romimg_insert_color_to_map(0x00, 0x78, 0x48, p_colorpal);
+            status += romimg_insert_color_to_map(0x00, 0x38, 0x39, p_colorpal);
+
+            status += romimg_insert_color_to_map(0xD8, 0xF0, 0xF8, p_colorpal);
+            status += romimg_insert_color_to_map(0xA8, 0xC0, 0xC8, p_colorpal);
+            status += romimg_insert_color_to_map(0x90, 0xA8, 0xB0, p_colorpal);
+            status += romimg_insert_color_to_map(0x60, 0x78, 0x90, p_colorpal);
+        }
     }
 
 
