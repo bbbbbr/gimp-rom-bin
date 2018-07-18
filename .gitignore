@@ -1,0 +1,4 @@
+/file-rom-bin
+*.zip
+*.7z
+obj/
