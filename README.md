@@ -6,14 +6,13 @@ GIMP plugin for reading, writing and converting ROM images and tile files. Usefu
 ![GIMP Image Editor opening Super Nintendo Image Tiles](https://raw.githubusercontent.com/bbbbbr/gimp-rom-bin/master/info/gimp-rom-image-plugin.png)
 
 
-Supported image formats: 
- * NES 1bpp
- * NES 2bpp
- * SNES/GB 2bpp
- * NGP 2bpp 
- * GBA 4bpp
- * SNES 4bpp
- * GG/SMS/WSC 4bpp 
+Supported image formats:
+ * NES 1bpp / 2bpp
+ * SNES 2bpp / 3bpp / 4bpp / 8bpp
+ * GB 2bpp
+ * NGP 2bpp
+ * GBA 4bpp / 8bpp
+ * GG/SMS/WSC 4bpp
  * MD 4bpp
  
 Supported file extensions:
