@@ -24,20 +24,23 @@ libexecdir = $(gimpplugindir)/plug-ins
 libexec_PROGRAMS = file-rom-bin
 
 file_rom_bin_SOURCES = \
-	export-dialog.c    \
-	format_nes_1bpp.c  \
-	lib_rom_bin.c      \
 	file-rom-bin.c     \
+	export-dialog.c    \
+	lib_rom_bin.c      \
+	read-rom-bin.c     \
+	write-rom-bin.c         \
+	format_nes_1bpp.c  \
 	format_nes_2bpp.c  \
 	format_gba_4bpp.c  \
-	read-rom-bin.c     \
+	format_gba_8bpp.c  \
 	format_ngp_2bpp.c  \
 	format_gens_4bpp.c \
-	rom_utils.c        \
 	format_snesgb_2bpp.c    \
+	format_snes_3bpp.c    \
+	format_snespce_4bpp.c
+	format_snes_8bpp.c    \
 	format_ggsmswsc_4bpp.c  \
-	write-rom-bin.c         \
-	format_snespce_4bpp.c   
+	rom_utils.c        \
 
 
 
