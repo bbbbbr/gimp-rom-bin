@@ -3,12 +3,11 @@ gimp file-rom-bin plugin
 
 GIMP plugin for reading, writing and converting ROM images and tile files. Useful in emulation ROM modding, hacks and extracting/inserting artwork.
 
+Download compiled executables here: 
+ * [Linux GIMP 2.8+](/bin/linux)
+ * [Windows GIMP 2.10.12+](/bin/windows)
+
 ![GIMP Image Editor opening Super Nintendo Image Tiles](https://raw.githubusercontent.com/bbbbbr/gimp-rom-bin/master/info/gimp-rom-image-plugin.png)
-
- Download compiled executables here: 
- * [Linux](https://github.com/bbbbbr/gimp-rom-bin/tree/master/bin/linux)
- * [Windows](https://github.com/bbbbbr/gimp-rom-bin/tree/master/bin/windows)
-
 
 Supported image formats:
  * NES 1bpp / 2bpp
@@ -53,6 +52,8 @@ Then copy the resulting "file-rom-bin" to your GIMP plugin folder, depends on ve
 Plug-in folder locations:
  Linux: ~/.gimp-2.8/plug-ins  , or ~/.config/GIMP/2.10/plug-ins
  Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
+
+Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-rom-bin/blob/master/doc/GIMP%20jhbuild%20for%20Windows%20on%20Linux.md)
 
 ```
 
