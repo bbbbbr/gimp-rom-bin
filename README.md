@@ -21,9 +21,10 @@ Supported file extensions:
  * .nes (nes 2bpp)
  * .gb (gb 2bpp)
  
- OS binaries available for: 
- * Linux
- * Windows
+ Built executables are available for download here: 
+ * [Linux](https://github.com/bbbbbr/gimp-rom-bin/tree/master/bin/linux)
+ * [Windows](https://github.com/bbbbbr/gimp-rom-bin/tree/master/bin/windows)
+ 
 
 
 ## Acknowledgement:
@@ -37,12 +38,20 @@ Supported file extensions:
 Native compile/install on Linux using below.
 
 ```
-gimptool-2.0 --install file-rom-binfile.c
-    or
- make (and then copy to your GIMP plugin folder, depends on version)
+If GIMP & build tools not yet installed:
+(example for debian/ubuntu/mint)
+ * sudo apt install gimp
+ * sudo apt install build-essential
+ * sudo apt install libgimp2.0-dev
+ 
+Then: 
+* cd gimp-rom-bin
+* make
+
+Then copy the resulting "file-rom-bin" to your GIMP plugin folder, depends on version
 
 Plug-in folder locations:
- Linux: ~/.gimp-2.8/plug-ins
+ Linux: ~/.gimp-2.8/plug-ins  , or ~/.config/GIMP/2.10/plug-ins
  Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
 
 ```
