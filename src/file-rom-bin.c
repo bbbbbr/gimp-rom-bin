@@ -179,6 +179,7 @@ static void query(void)
 
     // Additional NES handler for ".chr" format files and NES ROM files
     gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "2bpp", "");
 
 
     // Now register the save handlers
