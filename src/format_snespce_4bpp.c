@@ -36,12 +36,12 @@
 
 // TODO: move into function?
 static const rom_gfx_attrib rom_attrib = {
-    128,  // .IMAGE_WIDTH_DEFAULT  // image defaults to 128 pixels wide
+    256,  // .IMAGE_WIDTH_DEFAULT  // image default pixel width
     8,    // .TILE_PIXEL_WIDTH     // tiles are 8 pixels wide
     8,    // .TILE_PIXEL_HEIGHT    // tiles 8 pixels tall
     4,    // .BITS_PER_PIXEL       // bits per pixel mode
 
-    16,    // .DECODED_NUM_COLORS         // colors in pallete
+    16,    // .DECODED_NUM_COLORS         // colors in palette
     3     // .DECODED_BYTES_PER_COLOR    // 3 bytes: R,G,B
 };
 
