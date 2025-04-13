@@ -1,5 +1,5 @@
 # Predefined constants
-CC      = gcc
+CC      = cc
 TARGET  = file-rom-bin
 SRC_DIR = src
 OBJ_DIR = obj
