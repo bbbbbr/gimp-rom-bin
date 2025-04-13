@@ -126,9 +126,9 @@ void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom
 
     // Now calculate Width & Height
 
-    // * Width: if less than 128 pixels wide worth of
-    //          tiles, then use cumulative tile width.
-    //          Otherwise default to 128 (8 tiles)
+    // * Width: if less than N pixels wide worth of
+    //          tiles then use cumulative tile width.
+    //          Otherwise default to TILES * TILE_PIXEL_WIDTH)
     if ((tiles * rom_attrib.TILE_PIXEL_WIDTH) < rom_attrib.IMAGE_WIDTH_DEFAULT) {
         // Use number of tiles x size as the width
         p_app_gfx->width = (tiles * rom_attrib.TILE_PIXEL_WIDTH);
@@ -137,14 +137,28 @@ void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom
     {
         // TODO: It would be nice if width was selectable (as a multiple of tile width)
         p_app_gfx->width = rom_attrib.IMAGE_WIDTH_DEFAULT;
+
+        // Try to avoid extremely tall and narrow images
+        // 1:8 is a decent upper bound for width:height aspect ratio
+        #define OPTIMAL_ASPECT_RATIO 8
+        #define STEP_FACTOR      (2*2) // For every 2x increase in width there is a 2x decrease in height
+
+        long int tiles_per_row  = p_app_gfx->width / rom_attrib.TILE_PIXEL_WIDTH;
+        long int height         = (tiles / tiles_per_row) * rom_attrib.TILE_PIXEL_HEIGHT;
+             int aspect_ratio   = (height / p_app_gfx->width);
+
+        int width_increase = 1;
+        while (aspect_ratio >= (OPTIMAL_ASPECT_RATIO * 2)) {
+            aspect_ratio /= STEP_FACTOR;
+            width_increase *= 2;
+        }
+        p_app_gfx->width *= width_increase;
     }
-
-
 
     // * Height is a function of width, tile height and number of tiles
     //   Round up: Integer rounding up: (x + (n-1)) / n
-    p_app_gfx->height = (((tiles * rom_attrib.TILE_PIXEL_WIDTH) + (rom_attrib.IMAGE_WIDTH_DEFAULT - 1))
-                         / rom_attrib.IMAGE_WIDTH_DEFAULT);
+    p_app_gfx->height = (((tiles * rom_attrib.TILE_PIXEL_WIDTH) + (p_app_gfx->width - 1))
+                         / p_app_gfx->width);
 
     // Now scale up by the tile height
     p_app_gfx->height *= rom_attrib.TILE_PIXEL_HEIGHT;
