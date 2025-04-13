@@ -2,3 +2,4 @@
 *.zip
 *.7z
 obj/
+/build*/
