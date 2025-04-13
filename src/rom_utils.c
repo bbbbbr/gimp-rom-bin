@@ -136,7 +136,7 @@ void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom
     else
     {
         // TODO: It would be nice if width was selectable (as a multiple of tile width)
-        p_app_gfx->width = 128;
+        p_app_gfx->width = rom_attrib.IMAGE_WIDTH_DEFAULT;
     }
 
 
@@ -254,7 +254,7 @@ int romimg_load_color_data(app_color_data * p_colorpal)
     // 1BPP Default
     if (2 == p_colorpal->size) {
         status += romimg_insert_color_to_map(0x00, 0x00, 0x00, p_colorpal);
-        status += romimg_insert_color_to_map(0xA0, 0xA0, 0xA0, p_colorpal);
+        status += romimg_insert_color_to_map(0xFF, 0xFF, 0xFF, p_colorpal);
     }
     else if (4 == p_colorpal->size) {
         status += romimg_insert_color_to_map(0x00, 0x00, 0x00, p_colorpal);
