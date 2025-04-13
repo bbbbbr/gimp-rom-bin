@@ -110,14 +110,14 @@ static void query(void)
                            load_arguments,
                            load_return_values);
 
-// Install the load procedure for ".chr" files (only NES chr 2bpp)
+    // Install the load procedure for ".gb" files (only GB .gb image 2-bpp)
     gimp_install_procedure(LOAD_PROCEDURE_GB2BPP_GB,
-                           "Loads images in the Gameboy .gb 2-bpp file format",
-                           "Loads images in the Gameboy .gb 2-bpp file format",
+                           "Loads images in the Gameboy .gb .gbc 2-bpp file format",
+                           "Loads images in the Gameboy .gb .gbc 2-bpp file format",
                            "--",
                            "Copyright --",
                            "2018",
-                           "ROM GB .gb image 2-bpp",
+                           "ROM GB .gb .gbc image 2-bpp",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -156,14 +156,14 @@ static void query(void)
                            save_arguments,
                            NULL);
 
-    // Install the save procedure for ".chr" files (only NES chr 2bpp)
+    // Install the save procedure for ".gb .gbc 2bpp" files (GB 2bpp)
     gimp_install_procedure(SAVE_PROCEDURE_GB2BPP_GB,
-                           "Saves files in the Gameboy .gb 2-bpp image format",
-                           "Saves files in the Gameboy .gb 2-bpp image format",
+                           "Saves files in the Gameboy .gb .gbc 2-bpp image format",
+                           "Saves files in the Gameboy .gb .gbc 2-bpp image format",
                            "--",
                            "Copyright --",
                            "2018",
-                           "Gameboy .gb 2bpp bin image",
+                           "Gameboy .gb .gbc 2bpp bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -177,8 +177,8 @@ static void query(void)
     // Additional NES handler for ".chr" format files and NES ROM files
     gimp_register_load_handler(LOAD_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
 
-    // Additional NES handler for ".chr" format files and NES ROM files
-    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,2bpp", "");
+    // Additional NES handler for ".gb" format files and GB 2bpp ROM files
+    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
 
 
     // Now register the save handlers
@@ -188,7 +188,7 @@ static void query(void)
     gimp_register_save_handler(SAVE_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
 
     // Additional NES handler for ".chr" format files and NES ROM files
-    gimp_register_save_handler(SAVE_PROCEDURE_GB2BPP_GB, "gb", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
 
     // MIME handler registration is disabled for now, due to non-interactive
     //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");

@@ -22,7 +22,8 @@ Supported file extensions:
  * .bin
  * .chr (nes 2bpp)
  * .nes (nes 2bpp)
- * .gb (gb 2bpp)
+ * .gb/c (gb 2bpp)
+
   
 
 
