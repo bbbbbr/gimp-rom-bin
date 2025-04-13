@@ -45,7 +45,17 @@ If GIMP & build tools not yet installed:
  
 Then: 
 * cd gimp-rom-bin
+
+Build using GNU make:
 * make
+
+Build using CMake:
+* cmake ./
+* cmake --build ./
+
+Build using CMake in subdirectory:
+* cmake -B build/ ./
+* cmake --build build/
 
 Then copy the resulting "file-rom-bin" to your GIMP plugin folder, depends on version
 
