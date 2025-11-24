@@ -80,7 +80,7 @@ static void query(void)
         { GIMP_PDB_FLOAT,    "image_mode",  "ROM image format" }
     };
 
-    // Install the load procedure for ".bin" files (all formats)
+    // Install the load procedure for ".bin" files (all formats, including SNES file extensions)
     gimp_install_procedure(LOAD_PROCEDURE,
                            "Loads images in the ROM bin file format",
                            "Loads images in the ROM bin file format",
@@ -126,7 +126,7 @@ static void query(void)
                            load_return_values);
 
 
-    // Install the save procedure for ".bin" files (all formats)
+    // Install the save procedure for ".bin" files (all formats, including SNES file extensions)
     gimp_install_procedure(SAVE_PROCEDURE,
                            "Saves files in the ROM bin image format",
                            "Saves files in the ROM bin image format",
@@ -171,8 +171,8 @@ static void query(void)
                            save_arguments,
                            NULL);
 
-    // Register the load handlers
-    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
+    // Register the load handlers, including SNES file extensions
+    gimp_register_load_handler(LOAD_PROCEDURE, "bin,sfc,smc", "");
 
     // Additional NES handler for ".chr" format files and NES ROM files
     gimp_register_load_handler(LOAD_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
@@ -181,8 +181,8 @@ static void query(void)
     gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
 
 
-    // Now register the save handlers
-    gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
+    // Now register the save handlers, including SNES file extensions
+    gimp_register_save_handler(SAVE_PROCEDURE, "bin,sfc,smc", "");
 
     // Additional NES handler for ".chr" format files and NES ROM files
     gimp_register_save_handler(SAVE_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
