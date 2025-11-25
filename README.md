@@ -20,9 +20,12 @@ Supported image formats:
  
 Supported file extensions:
  * .bin
+ * .sfc, .smc
  * .chr (nes 2bpp)
  * .nes (nes 2bpp)
  * .gb/c (gb 2bpp)
+ * .duck, .md1, .md2, .md0 (gb 2bpp)
+ * .sms, .gg (sms/gg 4bpp)
 
   
 

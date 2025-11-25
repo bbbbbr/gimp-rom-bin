@@ -28,13 +28,17 @@
 #include "write-rom-bin.h"
 #include "export-dialog.h"
 
-const char LOAD_PROCEDURE[] = "file-rom-bin-load";
-const char LOAD_PROCEDURE_NES2BPP_CHRNES[] = "file-bin-bin-load-nes2bpp-chrnes";
-const char LOAD_PROCEDURE_GB2BPP_GB[] = "file-bin-bin-load-gb2bpp-gb";
+const char LOAD_PROCEDURE[]                 = "file-rom-bin-load";
+const char LOAD_PROCEDURE_NES2BPP_CHRNES[]  = "file-bin-bin-load-nes2bpp-chrnes";
+const char LOAD_PROCEDURE_GB2BPP_GB[]       = "file-bin-bin-load-gb2bpp-gb";
+const char LOAD_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-load-ggsms4bpp-ggsms";
+const char LOAD_PROCEDURE_SNES[]            = "file-bin-bin-load-snes";
 
-const char SAVE_PROCEDURE[]        = "file-rom-bin-save";
-const char SAVE_PROCEDURE_NES2BPP_CHRNES[] = "file-rom-bin-save-nes2bpp-chrnes";
-const char SAVE_PROCEDURE_GB2BPP_GB[] = "file-rom-bin-save-gb2bpp-gb";
+const char SAVE_PROCEDURE[]                 = "file-rom-bin-save";
+const char SAVE_PROCEDURE_NES2BPP_CHRNES[]  = "file-rom-bin-save-nes2bpp-chrnes";
+const char SAVE_PROCEDURE_GB2BPP_GB[]       = "file-rom-bin-save-gb2bpp-gb";
+const char SAVE_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-save-ggsms4bpp-ggsms";
+const char SAVE_PROCEDURE_SNES[]            = "file-bin-bin-save-snes";
 
 const char BINARY_NAME[]    = "file-rom-bin";
 
@@ -80,7 +84,7 @@ static void query(void)
         { GIMP_PDB_FLOAT,    "image_mode",  "ROM image format" }
     };
 
-    // Install the load procedure for ".bin" files (all formats, including SNES file extensions)
+    // Install the load procedure for ".bin" files
     gimp_install_procedure(LOAD_PROCEDURE,
                            "Loads images in the ROM bin file format",
                            "Loads images in the ROM bin file format",
@@ -112,12 +116,40 @@ static void query(void)
 
     // Install the load procedure for ".gb" files (only GB .gb image 2-bpp)
     gimp_install_procedure(LOAD_PROCEDURE_GB2BPP_GB,
-                           "Loads images in the Gameboy .gb .gbc 2-bpp file format",
-                           "Loads images in the Gameboy .gb .gbc 2-bpp file format",
+                           "Loads images in the GameBoy .gb .gbc 2-bpp file format",
+                           "Loads images in the GameBoy .gb .gbc 2-bpp file format",
                            "--",
                            "Copyright --",
                            "2018",
-                           "ROM GB .gb .gbc image 2-bpp",
+                           "ROM GB .gb .gbc .duck .md0 .md1 .md2 image 2-bpp",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+    gimp_install_procedure(LOAD_PROCEDURE_GGSMS4BPP_GGSMS,
+                           "Loads images in SMS/GameGear .gg .sms 4-bpp file format",
+                           "Loads images in SMS/GameGear .gg .sms 4-bpp file format",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "ROM SMS/GG .sms .gg image 4-bpp",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+    gimp_install_procedure(LOAD_PROCEDURE_SNES,
+                           "Loads ROM images in SNES .sfc .smc formats",
+                           "Loads ROM images in SNES .sfc .smc formats",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "ROM SNES .sfc .smc image",
                            NULL,
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(load_arguments),
@@ -126,7 +158,9 @@ static void query(void)
                            load_return_values);
 
 
-    // Install the save procedure for ".bin" files (all formats, including SNES file extensions)
+    // End LOAD, Begin SAVE
+
+    // Install the save procedure for ".bin" files (all formats)
     gimp_install_procedure(SAVE_PROCEDURE,
                            "Saves files in the ROM bin image format",
                            "Saves files in the ROM bin image format",
@@ -158,12 +192,12 @@ static void query(void)
 
     // Install the save procedure for ".gb .gbc 2bpp" files (GB 2bpp)
     gimp_install_procedure(SAVE_PROCEDURE_GB2BPP_GB,
-                           "Saves files in the Gameboy .gb .gbc 2-bpp image format",
-                           "Saves files in the Gameboy .gb .gbc 2-bpp image format",
+                           "Saves files in the GameBoy .gb .gbc 2-bpp image format",
+                           "Saves files in the GameBoy .gb .gbc 2-bpp image format",
                            "--",
                            "Copyright --",
                            "2018",
-                           "Gameboy .gb .gbc 2bpp bin image",
+                           "GameBoy .gb .gbc 2bpp bin image",
                            "INDEXED*",
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
@@ -171,24 +205,49 @@ static void query(void)
                            save_arguments,
                            NULL);
 
-    // Register the load handlers, including SNES file extensions
-    gimp_register_load_handler(LOAD_PROCEDURE, "bin,sfc,smc", "");
+    gimp_install_procedure(SAVE_PROCEDURE_GGSMS4BPP_GGSMS,
+                           "Saves files in SMS/GameGear .gg .sms 4-bpp file format",
+                           "Saves files in SMS/GameGear .gg .sms 4-bpp file format",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "SMS/GG .sms .gg image 4-bpp",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
 
-    // Additional NES handler for ".chr" format files and NES ROM files
+    gimp_install_procedure(SAVE_PROCEDURE_SNES,
+                           "Saves files in SNES .sfc .smc ROM formats",
+                           "Saves files in SNES .sfc .smc ROM formats",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "SNES .sfc .smc image",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
+
+
+    // Register the load handlers
+    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
     gimp_register_load_handler(LOAD_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp,duck,md0,md1,md2", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_SNES, "sfc,smc", "");
 
-    // Additional NES handler for ".gb" format files and GB 2bpp ROM files
-    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
 
-
-    // Now register the save handlers, including SNES file extensions
-    gimp_register_save_handler(SAVE_PROCEDURE, "bin,sfc,smc", "");
-
-    // Additional NES handler for ".chr" format files and NES ROM files
+    // Now register the save handlers
+    gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
     gimp_register_save_handler(SAVE_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
-
-    // Additional NES handler for ".chr" format files and NES ROM files
     gimp_register_save_handler(SAVE_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_SNES, "sfc,smc", "");
 
     // MIME handler registration is disabled for now, due to non-interactive
     //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
@@ -220,7 +279,9 @@ static void run(const gchar * name,
     // Check to see if this is the load procedure
     if( !strcmp(name, LOAD_PROCEDURE) ||
         !strcmp(name, LOAD_PROCEDURE_NES2BPP_CHRNES) ||
-        !strcmp(name, LOAD_PROCEDURE_GB2BPP_GB))
+        !strcmp(name, LOAD_PROCEDURE_GB2BPP_GB) ||
+        !strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS) ||
+        !strcmp(name, LOAD_PROCEDURE_SNES))
     {
         int new_image_id;
         int image_mode = -1;
@@ -239,6 +300,7 @@ static void run(const gchar * name,
         // Determine image file format, by load type or user dialog
         // * .chr and .nes files auto-default to NES 2bpp,
         // * .gb files auto-default to SNESGB 2bpp,
+        // etc.
         //
         //   no need to show image format selection dialog
         if(!strcmp(name, LOAD_PROCEDURE_NES2BPP_CHRNES))
@@ -246,7 +308,14 @@ static void run(const gchar * name,
             image_mode = BIN_MODE_NES_2BPP;
         else if(!strcmp(name, LOAD_PROCEDURE_GB2BPP_GB))
             image_mode = BIN_MODE_SNESGB_2BPP;
+        else if(!strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS))
+            image_mode = BIN_MODE_GGSMSWSC_4BPP;
         else {
+            // Implied: LOAD_PROCEDURE_SNES
+
+            // TODO: Optional dialog image mode filtering for SNES and others by passing
+            //       in the LOAD / SAVE procedures or an ID based on them
+
             // Only show settings dialog during interactive mode
             // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
             // - TODO: GIMP_RUN_WITH_LAST_VALS
@@ -284,7 +353,9 @@ static void run(const gchar * name,
     }
     else if(!strcmp(name, SAVE_PROCEDURE) ||
             !strcmp(name, SAVE_PROCEDURE_NES2BPP_CHRNES) ||
-            !strcmp(name, SAVE_PROCEDURE_GB2BPP_GB))
+            !strcmp(name, SAVE_PROCEDURE_GB2BPP_GB) ||
+            !strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS) ||
+            !strcmp(name, SAVE_PROCEDURE_SNES))
     {
         // This is the export procedure
 
@@ -318,14 +389,16 @@ static void run(const gchar * name,
 
                 // Only call the export dialog if it is "bin" and not NES 2bpp ".chr" mode
               if(!strcmp(name, SAVE_PROCEDURE_NES2BPP_CHRNES)) {
-                // Force NES 2bpp for .chr files
                 image_mode = BIN_MODE_NES_2BPP;
               }
               else if(!strcmp(name, SAVE_PROCEDURE_GB2BPP_GB)) {
-                // Force NES 2bpp for .chr files
                 image_mode = BIN_MODE_SNESGB_2BPP;
               }
+              else if(!strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS)) {
+                image_mode = BIN_MODE_GGSMSWSC_4BPP;
+              }
               else {
+                // Implied: SAVE_PROCEDURE_SNES
                 // Now get the settings
                 if(!export_dialog(&image_mode, name))
                 {
