@@ -96,7 +96,7 @@ void on_response(GtkDialog * dialog,
         *(data->response) = 1;
 }
 
-int export_dialog(int * image_mode, const gchar * name)
+int import_export_dialog(int * image_mode, const gchar * name, int ext_mode)
 {
     int response = 0;
     struct rom_bin_data data;
@@ -156,20 +156,29 @@ int export_dialog(int * image_mode, const gchar * name)
 
     // Add the mode select entries
     // TODO: convert strings to centralized definition
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NGPC");
+    if (ext_mode == BIN_EXT_MODE_SNES) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "3bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
+    }
+    else {
+        // Implied: BIN_EXT_MODE_GENERIC
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NGPC");
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "3bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "3bpp SNES");
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GG/SMS/WSC");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GG/SMS/WSC");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
+    }
 
     // Select default value
     // TODO: try to auto-detect image mode based on number of colors? (export only)

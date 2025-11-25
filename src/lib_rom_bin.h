@@ -47,6 +47,14 @@
         BIN_MODE_LAST
     };
 
+    enum rom_bin_extension_modes {
+        BIN_EXT_MODE_GENERIC,
+        BIN_EXT_MODE_GB,
+        BIN_EXT_MODE_NES,
+        BIN_EXT_MODE_SMSGG,
+        BIN_EXT_MODE_SNES,
+    };
+
     enum rom_bin_pixel_modes {
         BIN_BITDEPTH_INDEXED = 1,
         BIN_BITDEPTH_INDEXED_ALPHA = 2,

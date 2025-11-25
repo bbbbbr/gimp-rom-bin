@@ -311,7 +311,10 @@ static void run(const gchar * name,
         else if(!strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS))
             image_mode = BIN_MODE_GGSMSWSC_4BPP;
         else {
-            // Implied: LOAD_PROCEDURE_SNES
+            int ext_mode = BIN_EXT_MODE_GENERIC;
+
+            // SNES has multiple formats. Instead of forcing one, filter the dialog to SNES types only
+            if (!strcmp(name, LOAD_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
 
             // TODO: Optional dialog image mode filtering for SNES and others by passing
             //       in the LOAD / SAVE procedures or an ID based on them
@@ -322,7 +325,7 @@ static void run(const gchar * name,
             if (GIMP_RUN_INTERACTIVE == run_mode) {
 
                 // Show the import/export dialog
-                if(!export_dialog(&image_mode, name)) {
+                if(!import_export_dialog(&image_mode, name, ext_mode)) {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
                 }
@@ -398,9 +401,13 @@ static void run(const gchar * name,
                 image_mode = BIN_MODE_GGSMSWSC_4BPP;
               }
               else {
-                // Implied: SAVE_PROCEDURE_SNES
+                int ext_mode = BIN_EXT_MODE_GENERIC;
+
+                // SNES has multiple formats. Instead of forcing one, filter the dialog to SNES types only
+                if (!strcmp(name, SAVE_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
+
                 // Now get the settings
-                if(!export_dialog(&image_mode, name))
+                if(!import_export_dialog(&image_mode, name, ext_mode))
                 {
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
