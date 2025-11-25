@@ -162,6 +162,10 @@ int import_export_dialog(int * image_mode, const gchar * name, int ext_mode)
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
     }
+    else if (ext_mode == BIN_EXT_MODE_GBA) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
+    }
     else {
         // Implied: BIN_EXT_MODE_GENERIC
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");

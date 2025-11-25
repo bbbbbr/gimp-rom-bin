@@ -33,12 +33,14 @@ const char LOAD_PROCEDURE_NES2BPP_CHRNES[]  = "file-bin-bin-load-nes2bpp-chrnes"
 const char LOAD_PROCEDURE_GB2BPP_GB[]       = "file-bin-bin-load-gb2bpp-gb";
 const char LOAD_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-load-ggsms4bpp-ggsms";
 const char LOAD_PROCEDURE_SNES[]            = "file-bin-bin-load-snes";
+const char LOAD_PROCEDURE_GBA[]             = "file-bin-bin-load-gba";
 
 const char SAVE_PROCEDURE[]                 = "file-rom-bin-save";
 const char SAVE_PROCEDURE_NES2BPP_CHRNES[]  = "file-rom-bin-save-nes2bpp-chrnes";
 const char SAVE_PROCEDURE_GB2BPP_GB[]       = "file-rom-bin-save-gb2bpp-gb";
 const char SAVE_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-save-ggsms4bpp-ggsms";
 const char SAVE_PROCEDURE_SNES[]            = "file-bin-bin-save-snes";
+const char SAVE_PROCEDURE_GBA[]             = "file-bin-bin-save-gba";
 
 const char BINARY_NAME[]    = "file-rom-bin";
 
@@ -157,6 +159,19 @@ static void query(void)
                            load_arguments,
                            load_return_values);
 
+    gimp_install_procedure(LOAD_PROCEDURE_GBA,
+                           "Loads ROM images in GBA .gba formats",
+                           "Loads ROM images in GBA .gba formats",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "ROM GBA .gba image",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
 
     // End LOAD, Begin SAVE
 
@@ -233,6 +248,20 @@ static void query(void)
                            save_arguments,
                            NULL);
 
+    gimp_install_procedure(SAVE_PROCEDURE_GBA,
+                           "Saves files in GBA .gba ROM formats",
+                           "Saves files in GBA .gba ROM formats",
+                           "--",
+                           "Copyright --",
+                           "2018",
+                           "GBA .gba image",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
+
 
     // Register the load handlers
     gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
@@ -240,6 +269,7 @@ static void query(void)
     gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp,duck,md0,md1,md2", "");
     gimp_register_load_handler(LOAD_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
     gimp_register_load_handler(LOAD_PROCEDURE_SNES, "sfc,smc", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_GBA, "gba", "");
 
 
     // Now register the save handlers
@@ -248,6 +278,7 @@ static void query(void)
     gimp_register_save_handler(SAVE_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
     gimp_register_save_handler(SAVE_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
     gimp_register_save_handler(SAVE_PROCEDURE_SNES, "sfc,smc", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_GBA, "gba", "");
 
     // MIME handler registration is disabled for now, due to non-interactive
     //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
@@ -281,7 +312,8 @@ static void run(const gchar * name,
         !strcmp(name, LOAD_PROCEDURE_NES2BPP_CHRNES) ||
         !strcmp(name, LOAD_PROCEDURE_GB2BPP_GB) ||
         !strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS) ||
-        !strcmp(name, LOAD_PROCEDURE_SNES))
+        !strcmp(name, LOAD_PROCEDURE_SNES) ||
+        !strcmp(name, LOAD_PROCEDURE_GBA))
     {
         int new_image_id;
         int image_mode = -1;
@@ -313,11 +345,9 @@ static void run(const gchar * name,
         else {
             int ext_mode = BIN_EXT_MODE_GENERIC;
 
-            // SNES has multiple formats. Instead of forcing one, filter the dialog to SNES types only
-            if (!strcmp(name, LOAD_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
-
-            // TODO: Optional dialog image mode filtering for SNES and others by passing
-            //       in the LOAD / SAVE procedures or an ID based on them
+            // SNES/GBA have multiple formats. Instead of forcing one, pass a hint to filter the dialog
+            if      (!strcmp(name, LOAD_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
+            else if (!strcmp(name, LOAD_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
 
             // Only show settings dialog during interactive mode
             // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
@@ -358,7 +388,8 @@ static void run(const gchar * name,
             !strcmp(name, SAVE_PROCEDURE_NES2BPP_CHRNES) ||
             !strcmp(name, SAVE_PROCEDURE_GB2BPP_GB) ||
             !strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS) ||
-            !strcmp(name, SAVE_PROCEDURE_SNES))
+            !strcmp(name, SAVE_PROCEDURE_SNES) ||
+            !strcmp(name, SAVE_PROCEDURE_GBA))
     {
         // This is the export procedure
 
@@ -403,8 +434,9 @@ static void run(const gchar * name,
               else {
                 int ext_mode = BIN_EXT_MODE_GENERIC;
 
-                // SNES has multiple formats. Instead of forcing one, filter the dialog to SNES types only
-                if (!strcmp(name, SAVE_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
+                // SNES/GBA have multiple formats. Instead of forcing one, pass a hint to filter the dialog
+                if      (!strcmp(name, SAVE_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
+                else if (!strcmp(name, SAVE_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
 
                 // Now get the settings
                 if(!import_export_dialog(&image_mode, name, ext_mode))

@@ -53,6 +53,7 @@
         BIN_EXT_MODE_NES,
         BIN_EXT_MODE_SMSGG,
         BIN_EXT_MODE_SNES,
+        BIN_EXT_MODE_GBA,
     };
 
     enum rom_bin_pixel_modes {
