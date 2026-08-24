@@ -69,6 +69,8 @@ void on_response(GtkDialog * dialog,
 
     else if (!(g_strcmp0(string, "4bpp GBA")))
         *(data->image_mode) = BIN_MODE_GBA_4BPP;
+    else if (!(g_strcmp0(string, "4bpp Casio Loopy")))
+        *(data->image_mode) = BIN_MODE_CASIOLOOPY_4BPP;
     else if (!(g_strcmp0(string, "4bpp SNES")))
         *(data->image_mode) = BIN_MODE_SNES_4BPP;
     else if (!(g_strcmp0(string, "4bpp GG/SMS/WSC")))
@@ -78,6 +80,8 @@ void on_response(GtkDialog * dialog,
 
     else if (!(g_strcmp0(string, "8bpp GBA")))
         *(data->image_mode) = BIN_MODE_GBA_8BPP;
+    else if (!(g_strcmp0(string, "8bpp Casio Loopy")))
+        *(data->image_mode) = BIN_MODE_CASIOLOOPY_8BPP;
     else if (!(g_strcmp0(string, "8bpp SNES")))
         *(data->image_mode) = BIN_MODE_SNES_8BPP;
     else
@@ -166,6 +170,10 @@ int import_export_dialog(int * image_mode, const gchar * name, int ext_mode)
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
     }
+    else if (ext_mode == BIN_EXT_MODE_CASIOLOOPY) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp Casio Loopy");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp Casio Loopy");
+    }
     else {
         // Implied: BIN_EXT_MODE_GENERIC
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");
@@ -179,9 +187,11 @@ int import_export_dialog(int * image_mode, const gchar * name, int ext_mode)
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GG/SMS/WSC");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp Casio Loopy");
 
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
         gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp Casio Loopy");
     }
 
     // Select default value

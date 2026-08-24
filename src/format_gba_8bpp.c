@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <libgimp/gimp.h>
 
@@ -34,7 +35,8 @@
 
 // TODO: move into function?
 static const rom_gfx_attrib rom_attrib = {
-    256,  // .IMAGE_WIDTH_DEFAULT  // image default pixel width
+    64,   // .IMAGE_WIDTH_DEFAULT  // image default pixel width - (Defer to Casio Loopy here: tile/character memory arranged as an 8 tile wide column for tiles/objs that use more than 1 tile
+    true, // .FORCE_DEFAULT_IMAGE_WIDTH // Whether to force decode width to .IMAGE_WIDTH_DEFAULT or allow optimal width/height sizing
     8,    // .TILE_PIXEL_WIDTH     // tiles are 8 pixels wide
     8,    // .TILE_PIXEL_HEIGHT    // tiles 8 pixels tall
     8,    // .BITS_PER_PIXEL       // bits per pixel mode
@@ -66,7 +68,7 @@ static const rom_gfx_attrib rom_attrib = {
 //
 // -------------------------------------------------
 //
-//  8BPP GBA
+//  8BPP GBA / Casio Loopy
 //   Colors Per Tile - 0-255
 //   Space Used - 8 bits per pixel.  64 bytes per 8x8 tile.
 //

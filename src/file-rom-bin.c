@@ -34,6 +34,7 @@ const char LOAD_PROCEDURE_GB2BPP_GB[]       = "file-bin-bin-load-gb2bpp-gb";
 const char LOAD_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-load-ggsms4bpp-ggsms";
 const char LOAD_PROCEDURE_SNES[]            = "file-bin-bin-load-snes";
 const char LOAD_PROCEDURE_GBA[]             = "file-bin-bin-load-gba";
+const char LOAD_PROCEDURE_CASIOLOOPY[]      = "file-bin-bin-load-casioloopy";
 
 const char SAVE_PROCEDURE[]                 = "file-rom-bin-save";
 const char SAVE_PROCEDURE_NES2BPP_CHRNES[]  = "file-rom-bin-save-nes2bpp-chrnes";
@@ -41,6 +42,7 @@ const char SAVE_PROCEDURE_GB2BPP_GB[]       = "file-rom-bin-save-gb2bpp-gb";
 const char SAVE_PROCEDURE_GGSMS4BPP_GGSMS[] = "file-bin-bin-save-ggsms4bpp-ggsms";
 const char SAVE_PROCEDURE_SNES[]            = "file-bin-bin-save-snes";
 const char SAVE_PROCEDURE_GBA[]             = "file-bin-bin-save-gba";
+const char SAVE_PROCEDURE_CASIOLOOPY[]      = "file-bin-bin-save-casioloopy";
 
 const char BINARY_NAME[]    = "file-rom-bin";
 
@@ -173,6 +175,20 @@ static void query(void)
                            load_arguments,
                            load_return_values);
 
+    gimp_install_procedure(LOAD_PROCEDURE_CASIOLOOPY,
+                           "Loads ROM images in Casio Loopy .loopy formats",
+                           "Loads ROM images in Casio Loopy .loopy formats",
+                           "--",
+                           "Copyright --",
+                           "2026",
+                           "ROM Casio Loopy .loopy image",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
     // End LOAD, Begin SAVE
 
     // Install the save procedure for ".bin" files (all formats)
@@ -262,6 +278,20 @@ static void query(void)
                            save_arguments,
                            NULL);
 
+    gimp_install_procedure(SAVE_PROCEDURE_CASIOLOOPY,
+                           "Saves files in Casio Loopy .loopy ROM formats",
+                           "Saves files in Casio Loopy .loopy ROM formats",
+                           "--",
+                           "Copyright --",
+                           "2026",
+                           "Casio Loopy .loopy image",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
+
 
     // Register the load handlers
     gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
@@ -270,6 +300,7 @@ static void query(void)
     gimp_register_load_handler(LOAD_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
     gimp_register_load_handler(LOAD_PROCEDURE_SNES, "sfc,smc", "");
     gimp_register_load_handler(LOAD_PROCEDURE_GBA, "gba", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_CASIOLOOPY, "loopy", "");
 
 
     // Now register the save handlers
@@ -279,6 +310,7 @@ static void query(void)
     gimp_register_save_handler(SAVE_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
     gimp_register_save_handler(SAVE_PROCEDURE_SNES, "sfc,smc", "");
     gimp_register_save_handler(SAVE_PROCEDURE_GBA, "gba", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_CASIOLOOPY, "loopy", "");
 
     // MIME handler registration is disabled for now, due to non-interactive
     //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
@@ -313,7 +345,8 @@ static void run(const gchar * name,
         !strcmp(name, LOAD_PROCEDURE_GB2BPP_GB) ||
         !strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS) ||
         !strcmp(name, LOAD_PROCEDURE_SNES) ||
-        !strcmp(name, LOAD_PROCEDURE_GBA))
+        !strcmp(name, LOAD_PROCEDURE_GBA) ||
+        !strcmp(name, LOAD_PROCEDURE_CASIOLOOPY))
     {
         int new_image_id;
         int image_mode = -1;
@@ -345,9 +378,10 @@ static void run(const gchar * name,
         else {
             int ext_mode = BIN_EXT_MODE_GENERIC;
 
-            // SNES/GBA have multiple formats. Instead of forcing one, pass a hint to filter the dialog
+            // SNES/GBA/Casio Loopy have multiple formats. Instead of forcing one, pass a hint to filter the dialog
             if      (!strcmp(name, LOAD_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
             else if (!strcmp(name, LOAD_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
+            else if (!strcmp(name, LOAD_PROCEDURE_CASIOLOOPY))  ext_mode = BIN_EXT_MODE_CASIOLOOPY;
 
             // Only show settings dialog during interactive mode
             // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
@@ -389,7 +423,8 @@ static void run(const gchar * name,
             !strcmp(name, SAVE_PROCEDURE_GB2BPP_GB) ||
             !strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS) ||
             !strcmp(name, SAVE_PROCEDURE_SNES) ||
-            !strcmp(name, SAVE_PROCEDURE_GBA))
+            !strcmp(name, SAVE_PROCEDURE_GBA) ||
+            !strcmp(name, SAVE_PROCEDURE_CASIOLOOPY))
     {
         // This is the export procedure
 
@@ -434,9 +469,10 @@ static void run(const gchar * name,
               else {
                 int ext_mode = BIN_EXT_MODE_GENERIC;
 
-                // SNES/GBA have multiple formats. Instead of forcing one, pass a hint to filter the dialog
+                // SNES/GBA/Casio Loopy have multiple formats. Instead of forcing one, pass a hint to filter the dialog
                 if      (!strcmp(name, SAVE_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
                 else if (!strcmp(name, SAVE_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
+                else if (!strcmp(name, SAVE_PROCEDURE_CASIOLOOPY))  ext_mode = BIN_EXT_MODE_CASIOLOOPY;
 
                 // Now get the settings
                 if(!import_export_dialog(&image_mode, name, ext_mode))

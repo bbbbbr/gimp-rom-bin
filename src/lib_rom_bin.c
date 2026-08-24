@@ -31,8 +31,9 @@
 #include "format_snespce_4bpp.h"
 #include "format_ggsmswsc_4bpp.h"
 #include "format_gens_4bpp.h"
+#include "format_casioloopy_4bpp.h"
 
-#include "format_gba_8bpp.h"
+#include "format_gba_8bpp.h" // Also covers Casio Loopy
 #include "format_snes_8bpp.h"
 
 #include <stdio.h>
@@ -57,9 +58,11 @@ static int (*function_map_decode[])(rom_gfx_data *,
         [BIN_MODE_SNES_4BPP]     = bin_decode_snes_4bpp,
         [BIN_MODE_GGSMSWSC_4BPP] = bin_decode_ggsmswsc_4bpp,
         [BIN_MODE_GENS_4BPP]     = bin_decode_gens_4bpp,
+        [BIN_MODE_CASIOLOOPY_4BPP] = bin_decode_casioloopy_4bpp,
 
         [BIN_MODE_GBA_8BPP]      = bin_decode_gba_8bpp,
         [BIN_MODE_SNES_8BPP]     = bin_decode_snes_8bpp,
+        [BIN_MODE_CASIOLOOPY_8BPP] = bin_decode_gba_8bpp, // Casio Loopy uses same 8bpp format as GBA
 };
 
 
@@ -76,9 +79,11 @@ static int (*function_map_encode[])(rom_gfx_data *,
         [BIN_MODE_SNES_4BPP]     = bin_encode_snes_4bpp,
         [BIN_MODE_GGSMSWSC_4BPP] = bin_encode_ggsmswsc_4bpp,
         [BIN_MODE_GENS_4BPP]     = bin_encode_gens_4bpp,
+        [BIN_MODE_CASIOLOOPY_4BPP] = bin_encode_casioloopy_4bpp,
 
         [BIN_MODE_GBA_8BPP]      = bin_encode_gba_8bpp,
         [BIN_MODE_SNES_8BPP]     = bin_encode_snes_8bpp,
+        [BIN_MODE_CASIOLOOPY_8BPP]  = bin_encode_gba_8bpp, // Casio Loopy uses same 8bpp format as GBA
 };
 
 

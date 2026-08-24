@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 //#include <libgimp/gimp.h>
 
 
@@ -40,9 +41,11 @@
         BIN_MODE_SNES_4BPP,
         BIN_MODE_GGSMSWSC_4BPP,
         BIN_MODE_GENS_4BPP,
+        BIN_MODE_CASIOLOOPY_4BPP,
 
         BIN_MODE_GBA_8BPP,
         BIN_MODE_SNES_8BPP,
+        BIN_MODE_CASIOLOOPY_8BPP,
 
         BIN_MODE_LAST
     };
@@ -54,6 +57,7 @@
         BIN_EXT_MODE_SMSGG,
         BIN_EXT_MODE_SNES,
         BIN_EXT_MODE_GBA,
+        BIN_EXT_MODE_CASIOLOOPY,
     };
 
     enum rom_bin_pixel_modes {
@@ -66,6 +70,7 @@
 
         typedef struct rom_gfx_attrib {
             unsigned int  IMAGE_WIDTH_DEFAULT;
+            bool          FORCE_DEFAULT_IMAGE_WIDTH;
             unsigned int  TILE_PIXEL_WIDTH;
             unsigned int  TILE_PIXEL_HEIGHT;
             unsigned char BITS_PER_PIXEL;

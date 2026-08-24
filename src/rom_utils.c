@@ -87,7 +87,7 @@ long int romimg_calc_encoded_size(app_gfx_data * p_app_gfx, rom_gfx_attrib rom_a
 
 
 
-// TODO: Better handling for files that aren't even multipels of tile size (ex: .nes files)
+// TODO: Better handling for files that aren't even multiples of tile size (ex: .nes files)
 //       Could use transparent pixels to encoded/indicate non-file data (if entire tile == transparent: truncate)
 //       Add image width option to open dialog (128 default)
 void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom_gfx_attrib rom_attrib)
@@ -132,6 +132,10 @@ void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom
     if ((tiles * rom_attrib.TILE_PIXEL_WIDTH) < rom_attrib.IMAGE_WIDTH_DEFAULT) {
         // Use number of tiles x size as the width
         p_app_gfx->width = (tiles * rom_attrib.TILE_PIXEL_WIDTH);
+    }
+    else if (rom_attrib.FORCE_DEFAULT_IMAGE_WIDTH) {
+        // Some formats may request exact width instead of optimal sizing
+        p_app_gfx->width = rom_attrib.IMAGE_WIDTH_DEFAULT;
     }
     else
     {

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <libgimp/gimp.h>
 
@@ -35,6 +36,7 @@
 // TODO: move into function?
 static const rom_gfx_attrib rom_attrib = {
     256,  // .IMAGE_WIDTH_DEFAULT  // image default pixel width
+    false, // .FORCE_DEFAULT_IMAGE_WIDTH // Whether to force decode width to .IMAGE_WIDTH_DEFAULT or allow optimal width/height sizing
     8,    // .TILE_PIXEL_WIDTH     // tiles are 8 pixels wide
     8,    // .TILE_PIXEL_HEIGHT    // tiles 8 pixels tall
     1,    // .BITS_PER_PIXEL       // bits per pixel

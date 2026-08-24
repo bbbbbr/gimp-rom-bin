@@ -32,6 +32,7 @@ file_rom_bin_SOURCES = \
 	format_nes_1bpp.c  \
 	format_nes_2bpp.c  \
 	format_gba_4bpp.c  \
+	format_casioloopy_4bpp.c  \
 	format_gba_8bpp.c  \
 	format_ngp_2bpp.c  \
 	format_gens_4bpp.c \

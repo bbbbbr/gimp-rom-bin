@@ -17,6 +17,7 @@ Supported image formats:
  * GBA 4bpp / 8bpp
  * GG/SMS/WSC 4bpp
  * MD 4bpp
+ * Casio Loopy 4bpp / 8bpp
  
 Supported file extensions:
  * .bin
@@ -26,7 +27,8 @@ Supported file extensions:
  * .gb/c (gb 2bpp)
  * .duck, .md1, .md2, .md0 (gb 2bpp)
  * .sms, .gg (sms/gg 4bpp)
-
+ * .gba
+ * .loopy
   
 
 
