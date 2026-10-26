@@ -26,203 +26,65 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
-extern const char SAVE_PROCEDURE[];
-extern const char LOAD_PROCEDURE[];
-extern const char BINARY_NAME[];
-
-// Response structure
-struct rom_bin_data {
-    int       * response;
-    GtkWidget * image_mode_combo;
-    int       * image_mode;
-};
-
-void on_response(GtkDialog *, gint, gpointer);
-
-void on_response(GtkDialog * dialog,
-                 gint response_id,
-                 gpointer user_data)
+//
+// Generate the widgets straight from the procedure's arguments,
+// so the format picker is a "choice" argument on the procedure itself.
+// That means the last used format is remembered by GIMP between invocations,
+// and that the dialog no longer needs its own main loop.
+//
+gboolean rom_bin_settings_dialog (GimpProcedure       * procedure,
+                                  GimpProcedureConfig * config,
+                                  const gchar         * title,
+                                  const gchar         * ok_label)
 {
-    // Read the value of the combo box and store it in user_data
-    struct rom_bin_data * data = user_data;
-
-    // Connect to the combo box pointer
-    // Then get currently selected string from combo box
-    GtkWidget * image_mode_combo = data->image_mode_combo;
-    gchar *string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(image_mode_combo) );
-
-    // TODO: Using the dialog on import is disabled for now- remove support for import prompting?
-    // TODO: convert strings to centralized definition
-    // Match the string up to an output mode
-    if (!(g_strcmp0(string, "1bpp NES")))
-        *(data->image_mode) = BIN_MODE_NES_1BPP;
-    else if (!(g_strcmp0(string, "2bpp NES")))
-        *(data->image_mode) = BIN_MODE_NES_2BPP;
-    else if (!(g_strcmp0(string, "2bpp SNES/GB")))
-        *(data->image_mode) = BIN_MODE_SNESGB_2BPP;
-    else if (!(g_strcmp0(string, "2bpp NGPC")))
-        *(data->image_mode) = BIN_MODE_NGPC_2BPP;
-
-    else if (!(g_strcmp0(string, "3bpp SNES")))
-        *(data->image_mode) = BIN_MODE_SNES_3BPP;
-
-
-    else if (!(g_strcmp0(string, "4bpp GBA")))
-        *(data->image_mode) = BIN_MODE_GBA_4BPP;
-    else if (!(g_strcmp0(string, "4bpp Casio Loopy")))
-        *(data->image_mode) = BIN_MODE_CASIOLOOPY_4BPP;
-    else if (!(g_strcmp0(string, "4bpp SNES")))
-        *(data->image_mode) = BIN_MODE_SNES_4BPP;
-    else if (!(g_strcmp0(string, "4bpp GG/SMS/WSC")))
-        *(data->image_mode) = BIN_MODE_GGSMSWSC_4BPP;
-    else if (!(g_strcmp0(string, "4bpp GEN")))
-        *(data->image_mode) = BIN_MODE_GENS_4BPP;
-
-    else if (!(g_strcmp0(string, "8bpp GBA")))
-        *(data->image_mode) = BIN_MODE_GBA_8BPP;
-    else if (!(g_strcmp0(string, "8bpp Casio Loopy")))
-        *(data->image_mode) = BIN_MODE_CASIOLOOPY_8BPP;
-    else if (!(g_strcmp0(string, "8bpp SNES")))
-        *(data->image_mode) = BIN_MODE_SNES_8BPP;
-    else
-        *(data->image_mode) = -1; //
-
-    g_print( "Selected: >> %s <<\n", ( string ? string : "NULL" ) );
-
-    // Free string
-    g_free( string );
-
-
-    // Quit the loop
-    gtk_main_quit();
-
-    if(response_id == GTK_RESPONSE_OK)
-        *(data->response) = 1;
-}
-
-int import_export_dialog(int * image_mode, const gchar * name, int ext_mode)
-{
-    int response = 0;
-    struct rom_bin_data data;
     GtkWidget * dialog;
+    GtkWidget * widget;
     GtkWidget * vbox;
-    GtkWidget * label;
+    gboolean    run;
 
-    GtkWidget * image_mode_combo;
+    dialog = gimp_procedure_dialog_new (procedure, config, title);
 
+    if (ok_label != NULL)
+        gimp_procedure_dialog_set_ok_label (GIMP_PROCEDURE_DIALOG (dialog),
+                                            ok_label);
 
-    // Create the export dialog
+    // Explanatory label
+    gimp_procedure_dialog_get_label (GIMP_PROCEDURE_DIALOG (dialog),
+                                     "rom-bin-info",
+                                     "The options below allow you to customize\n"
+                                     "the ROM bin image that is created.",
+                                     FALSE, FALSE);
 
-    if(!strcmp(name, SAVE_PROCEDURE)) {
-        // If Exporting use the export dialog convenience function
-        dialog = gimp_export_dialog_new("ROM bin",
-                                        BINARY_NAME,
-                                        SAVE_PROCEDURE);
-    }
-    else {
+    // The format picker, generated from the "mode" choice argument
+    widget = gimp_procedure_dialog_get_widget (GIMP_PROCEDURE_DIALOG (dialog),
+                                               MODE_ARGUMENT,
+                                               G_TYPE_NONE);
 
-        // If Opening then make an equivalent dialog
-        gchar     *title  = g_strconcat ("Open Image as ", "ROM bin", NULL);
+    gimp_help_set_help_data (widget,
+                             "The bit depth and tile layout of the ROM or "
+                             "tile file. Formats are grouped by the system "
+                             "they come from.",
+                             NULL);
 
-        dialog = gimp_dialog_new (title, BINARY_NAME,
-                                  NULL, 0,
-                                  gimp_standard_help_func, LOAD_PROCEDURE,
-                                  "_Cancel", GTK_RESPONSE_CANCEL,
-                                  "_Open", GTK_RESPONSE_OK,
-                                  NULL);
+    // Stack the label and the picker vertically
+    vbox = gimp_procedure_dialog_fill_box (GIMP_PROCEDURE_DIALOG (dialog),
+                                           "rom-bin-vbox",
+                                           "rom-bin-info",
+                                           MODE_ARGUMENT,
+                                           NULL);
 
-        gtk_dialog_set_alternative_button_order (GTK_DIALOG (dialog),
-                                                 GTK_RESPONSE_OK,
-                                                 GTK_RESPONSE_CANCEL,
-                                                 -1);
+    gtk_box_set_spacing (GTK_BOX (vbox), 12);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
 
-        gimp_window_set_transient (GTK_WINDOW (dialog));
+    gimp_procedure_dialog_fill (GIMP_PROCEDURE_DIALOG (dialog),
+                                "rom-bin-vbox",
+                                NULL);
 
-        g_free (title);
-    }
+    gtk_widget_show_all (dialog);
 
+    run = gimp_procedure_dialog_run (GIMP_PROCEDURE_DIALOG (dialog));
 
-    // Create the VBox
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-                       vbox, TRUE, TRUE, 2);
-    gtk_widget_show(vbox);
+    gtk_widget_destroy (dialog);
 
-    // Create the label
-    label = gtk_label_new("The options below allow you to customize\nthe ROM bin image that is created.");
-    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 2);
-    gtk_widget_show(label);
-
-
-    // Create a combo/list box for selecting the mode
-    image_mode_combo = gtk_combo_box_text_new();
-
-    // Add the mode select entries
-    // TODO: convert strings to centralized definition
-    if (ext_mode == BIN_EXT_MODE_SNES) {
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "3bpp SNES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
-    }
-    else if (ext_mode == BIN_EXT_MODE_GBA) {
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
-    }
-    else if (ext_mode == BIN_EXT_MODE_CASIOLOOPY) {
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp Casio Loopy");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp Casio Loopy");
-    }
-    else {
-        // Implied: BIN_EXT_MODE_GENERIC
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "1bpp NES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp SNES/GB");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "2bpp NGPC");
-
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "3bpp SNES");
-
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GBA");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp SNES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GG/SMS/WSC");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp GEN");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "4bpp Casio Loopy");
-
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp GBA");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp SNES");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(image_mode_combo), "8bpp Casio Loopy");
-    }
-
-    // Select default value
-    // TODO: try to auto-detect image mode based on number of colors? (export only)
-    gtk_combo_box_set_active(GTK_COMBO_BOX(image_mode_combo), 0);
-
-    // Add it to the box for display and show it
-    gtk_box_pack_start(GTK_BOX(vbox), image_mode_combo, FALSE, FALSE, 6);
-    gtk_widget_show(image_mode_combo);
-
-
-    // TODO: set Export as default focused button
-
-    // Connect the controls to the response signal
-    data.response      = &response;
-    data.image_mode_combo = image_mode_combo;
-    data.image_mode = image_mode;
-
-    g_signal_connect(dialog, "response", G_CALLBACK(on_response),   &data);
-    g_signal_connect(dialog, "destroy",  G_CALLBACK(gtk_main_quit), NULL);
-
-    // TODO: Above is spawning these errors:
-    //       IA__gtk_main_quit: assertion 'main_loops != NULL' failed
-    //       https://www.gtk.org/tutorial1.2/gtk_tut-2.html
-    //       https://ubuntuforums.org/showthread.php?t=394399
-
-    // Show the dialog and run it
-    gtk_widget_show(dialog);
-    gimp_dialog_run(GIMP_DIALOG(dialog));
-
-    gtk_widget_destroy(dialog);
-
-    return response;
+    return run;
 }

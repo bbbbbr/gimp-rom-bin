@@ -4,8 +4,10 @@ gimp file-rom-bin plugin
 GIMP plugin for reading, writing and converting ROM images and tile files. Useful in emulation ROM modding, hacks and extracting/inserting artwork.
 
 Download compiled executables here: 
- * [Linux GIMP 2.8+](/bin/linux)
- * [Windows GIMP 2.10.12+](/bin/windows)
+ * [Linux GIMP 3.x](/bin/linux)
+ * [Windows GIMP 3.x+](/bin/windows)
+
+Note: `master` targets **GIMP 3.x**
 
 ![GIMP Image Editor opening Super Nintendo Image Tiles](https://raw.githubusercontent.com/bbbbbr/gimp-rom-bin/master/info/gimp-rom-image-plugin.png)
 
@@ -47,20 +49,44 @@ If GIMP & build tools not yet installed:
 (example for debian/ubuntu/mint)
  * sudo apt install gimp
  * sudo apt install build-essential
- * sudo apt install libgimp2.0-dev
+ * sudo apt install libgimp-3.0-dev
  
 Then: 
 * cd gimp-rom-bin
 * make
+* make install        # copies into ~/.config/GIMP/3.2/plug-ins/file-rom-bin/
 
-Then copy the resulting "file-rom-bin" to your GIMP plugin folder, depends on version
+Then restart GIMP so the new plug-in is picked up.
 
 Plug-in folder locations:
- Linux: ~/.gimp-2.8/plug-ins  , or ~/.config/GIMP/2.10/plug-ins
- Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
+ Linux: ~/.config/GIMP/3.2/plug-ins/<plugin-name>/   (GIMP 3.x sub directory per plug-in)
+ Windows: C:\Program Files\GIMP 3\lib\gimp\3.0\plug-ins
 
 ```
 Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-rom-bin/blob/master/doc/GIMP%20jhbuild%20for%20Windows%20on%20Linux.md)
+
+## Batch / scripting (GIMP 3)
+
+The image format is a real procedure argument now (`mode`, a choice), instead of
+a combo box that only existed inside the plug-in's own dialog. That means batch
+runs can pick a format, and GIMP remembers the last one used in the GUI:
+
+```scheme
+(file-rom-bin-load #:run-mode RUN-NONINTERACTIVE
+                   #:file "tiles.sfc"
+                   #:mode "snes-4bpp")
+
+(file-rom-bin-save #:run-mode RUN-NONINTERACTIVE
+                   #:image image
+                   #:file "out.sfc"
+                   #:mode "snes-4bpp")
+```
+
+Available `mode` values: `nes-1bpp`, `nes-2bpp`, `snesgb-2bpp`, `ngpc-2bpp`,
+`snes-3bpp`, `gba-4bpp`, `snes-4bpp`, `ggsms-4bpp`, `gens-4bpp`,
+`casioloopy-4bpp`, `gba-8bpp`, `snes-8bpp`, `casioloopy-8bpp`.
+The extension specific procedures (`.chr`/`.nes`, `.gb`, `.sms`/`.gg`) have the
+format fixed and take no `mode` argument.
 
 ## Known limitations & Issues:
 * Palettes: Does not yet import palettes and defaults to internal standard palettes. Which can then be changed using the GIMP color map and Palette tools.

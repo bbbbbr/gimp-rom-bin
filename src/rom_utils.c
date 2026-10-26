@@ -171,7 +171,6 @@ void romimg_calc_decoded_size(long int file_size,  app_gfx_data * p_app_gfx, rom
     // as needing to be stored in metadata as a gimp parasite
     p_app_gfx->surplus_bytes_size = surplus_bytes_count;
 
-    printf("extra bytes %ld\n", p_app_gfx->surplus_bytes_size);
 }
 
 
@@ -180,7 +179,7 @@ int romimg_stash_surplus_bytes(app_gfx_data * p_app_gfx, rom_gfx_data * p_rom_gf
 {
     if (p_app_gfx->surplus_bytes_size > 0) {
 
-        printf("Saving extra bytes %ld\n", p_app_gfx->surplus_bytes_size);
+        g_printerr("Saving extra bytes %ld\n", p_app_gfx->surplus_bytes_size);
 
         // Set aside any surplus bytes at the end which weren't decoded as tiles
         // These will get attached to the gimp image as metadata parasite
@@ -204,7 +203,7 @@ int romimg_append_surplus_bytes(app_gfx_data * p_app_gfx, rom_gfx_data * p_rom_g
 
     if (p_app_gfx->surplus_bytes_size > 0) {
 
-        printf("Appending extra bytes %ld\n", p_app_gfx->surplus_bytes_size);
+        g_printerr("Appending extra bytes %ld\n", p_app_gfx->surplus_bytes_size);
 
         // Allocate a new buffer with the size of the others combined
         new_size = p_rom_gfx->size + p_app_gfx->surplus_bytes_size;
@@ -212,7 +211,7 @@ int romimg_append_surplus_bytes(app_gfx_data * p_app_gfx, rom_gfx_data * p_rom_g
         if (NULL == (p_new_rom_data = malloc(new_size)))
             return -1;
 
-        printf("Size:  rom=%ld, surplus=%ld, newrom=%ld\n", p_rom_gfx->size,
+        g_printerr("Size:  rom=%ld, surplus=%ld, newrom=%ld\n", p_rom_gfx->size,
                                                           p_app_gfx->surplus_bytes_size,
                                                           new_size);
 

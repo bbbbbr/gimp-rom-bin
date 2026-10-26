@@ -24,142 +24,177 @@
 #include <stdint.h>
 #include <libgimp/gimp.h>
 
-int read_rom_bin(const gchar * filename, int image_mode)
+//
+// Read a ROM / tile file and return a new INDEXED GimpImage.
+//
+// GIMP 3 changes that matter here:
+//   * images, layers and drawables are GObjects instead of gint32 ids
+//   * GimpPixelRgn is gone, pixel data is moved through a GeglBuffer
+//   * an indexed image keeps its colormap in a GimpPalette object
+//   * for an indexed drawable the GeglBuffer stores palette *indexes*
+//     (2 bytes per pixel when the layer has an alpha channel), which is
+//     exactly the layout the decoders produce
+//
+GimpImage * read_rom_bin (GFile * filename, int image_mode, GError ** error)
 {
-    int status = 1;
-
-    gint32 new_image_id,
-           new_layer_id;
-    GimpDrawable * drawable;
-    GimpPixelRgn rgn;
+    GimpImage    * image;
+    GimpLayer    * layer;
+    GimpPalette  * palette;
+    GeglBuffer   * buffer;
     GimpParasite * parasite;
 
-    FILE * file;
-
+    gchar        * file_contents = NULL;
+    gsize          file_length   = 0;
 
     app_gfx_data   app_gfx;
-    app_color_data colorpal; // TODO: rename to app_colorpal?
+    app_color_data colorpal;
     rom_gfx_data   rom_gfx;
 
-    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
+    rom_bin_init_structs (&rom_gfx, &app_gfx, &colorpal);
 
     app_gfx.image_mode      = image_mode;
     app_gfx.bytes_per_pixel = BIN_BITDEPTH_INDEXED_ALPHA;
 
 
-    // Try to open the file
-    file = fopen(filename, "rb");
-    if(!file)
-        return -1;
+    // Try to read the whole file into memory
+    if (! g_file_load_contents (filename, NULL, &file_contents,
+                                &file_length, NULL, error))
+        return NULL;
 
-    // Get the file size
-    fseek(file, 0, SEEK_END);
-    rom_gfx.size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    rom_gfx.p_data = (unsigned char *) file_contents;
+    rom_gfx.size   = (long int) file_length;
 
-    // Now prepare a buffer of that size
-    // and read the data.
-    rom_gfx.p_data = malloc(rom_gfx.size);
-    fread(rom_gfx.p_data, rom_gfx.size, 1, file);
-
-    // Close the file
-    fclose(file);
-
-    // Make sure the alloc succeeded
-    if(rom_gfx.p_data == NULL)
-        return -1;
-
-
-    // Perform the load procedure and free the raw data.
-    status = rom_bin_decode(&rom_gfx,
-                            &app_gfx,
-                            &colorpal);
-
-    free(rom_gfx.p_data);
-
-    // Check to make sure that the load was successful
-    if (0 != status)
+    // Make sure the file wasn't empty before decoding from it
+    if (rom_gfx.size <= 0)
     {
-        printf("Image load failed \n");
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "The file '%s' is empty",
+                     g_file_peek_path (filename) ? g_file_peek_path (filename) : "");
 
-        if (app_gfx.p_data)
-            free(app_gfx.p_data);
+        g_free (file_contents);
+        return NULL;
+    }
 
-        if (colorpal.p_data)
-            free(colorpal.p_data);
+    // Perform the decode procedure. The raw rom data is owned by this
+    // function, the decoded pixel + colormap buffers by the decoders.
+    if (0 != rom_bin_decode (&rom_gfx, &app_gfx, &colorpal))
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Could not decode '%s' as a %s image",
+                     g_file_peek_path (filename) ? g_file_peek_path (filename) : "",
+                     rom_bin_mode_entry_by_mode (image_mode)
+                         ? rom_bin_mode_entry_by_mode (image_mode)->label
+                         : "ROM bin");
 
-        printf("Image load failed: free complete \n");
+        g_free (file_contents);
+        free (app_gfx.p_data);
+        free (colorpal.p_data);
 
-        return -1;
+        return NULL;
+    }
+
+    g_free (file_contents);
+
+    if ((app_gfx.width == 0) || (app_gfx.height == 0) ||
+        (app_gfx.p_data == NULL))
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "The decoded image has no pixels");
+
+        free (app_gfx.p_data);
+        free (colorpal.p_data);
+
+        return NULL;
     }
 
 
+    // Now create the new INDEXED image
+    image = gimp_image_new ((gint) app_gfx.width, (gint) app_gfx.height,
+                            GIMP_INDEXED);
 
-    // Now create the new INDEXED image.
-    new_image_id = gimp_image_new(app_gfx.width, app_gfx.height, GIMP_INDEXED);
+    if (image == NULL)
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Could not create the image");
 
-    // Create the new layer
-    new_layer_id = gimp_layer_new(new_image_id,
-                                  "Background",
-                                  app_gfx.width, app_gfx.height,
-                                  GIMP_INDEXEDA_IMAGE,
-                                  100,
-                                  GIMP_NORMAL_MODE);
+        free (app_gfx.p_data);
+        free (colorpal.p_data);
 
-    // Get the drawable for the layer
-    drawable = gimp_drawable_get(new_layer_id);
+        return NULL;
+    }
+
+    // Create the background layer, with an alpha channel so that the
+    // "no rom data here" padding tiles stay identifiable on export
+    layer = gimp_layer_new (image, "Background",
+                            (gint) app_gfx.width, (gint) app_gfx.height,
+                            GIMP_INDEXEDA_IMAGE,
+                            100,
+                            gimp_image_get_default_new_layer_mode (image));
+
+    gimp_image_insert_layer (image, layer, NULL, 0);
 
 
-    // Set up the indexed color map
-    gimp_image_set_colormap(new_image_id, colorpal.p_data, colorpal.size);
+    // Set up the indexed color map. GIMP 3 keeps it in the image's
+    // palette object instead of a per-image colormap array.
+    // (colorpal.size is the *number of colors*, 3 bytes each)
+    if ((colorpal.p_data != NULL) && (colorpal.size > 0))
+    {
+        palette = gimp_image_get_palette (image);
 
-    // Get a pixel region from the layer
-    gimp_pixel_rgn_init(&rgn,
-                        drawable,
-                        0, 0,
-                        app_gfx.width, app_gfx.height,
-                        TRUE, FALSE);
+        if (palette != NULL)
+        {
+            gimp_palette_set_colormap (palette,
+                                       babl_format ("R'G'B' u8"),
+                                       colorpal.p_data,
+                                       (gsize) colorpal.size *
+                                       (gsize) colorpal.bytes_per_pixel);
 
-    // Now FINALLY set the pixel data
-    gimp_pixel_rgn_set_rect(&rgn,
-                            app_gfx.p_data,
-                            0, 0,
-                            app_gfx.width, app_gfx.height);
+            // Note: gimp_image_get_palette() is transfer-none, the palette
+            // proxy is owned by the image, do not unref it here
+        }
+    }
 
+    // Now FINALLY set the pixel data, in the drawable's native format:
+    // for an indexed layer that is one palette index per pixel (plus an
+    // alpha byte when the layer has one)
+    buffer = gimp_drawable_get_buffer (GIMP_DRAWABLE (layer));
+
+    gegl_buffer_set (buffer,
+                     GEGL_RECTANGLE (0, 0,
+                                     (gint) app_gfx.width,
+                                     (gint) app_gfx.height),
+                     0,
+                     gimp_drawable_get_format (GIMP_DRAWABLE (layer)),
+                     app_gfx.p_data,
+                     GEGL_AUTO_ROWSTRIDE);
+
+    g_object_unref (buffer);
 
 
     if ((app_gfx.surplus_bytes_size > 0) &&
-        (app_gfx.p_surplus_bytes != NULL)) {
+        (app_gfx.p_surplus_bytes != NULL))
+    {
+        // Store surplus (non-decodable) bytes from the rom into a gimp
+        // metadata parasite, so that exporting can put them back
+        parasite = gimp_parasite_new ("ROM-BIN-SURPLUS-BYTES",
+                                      GIMP_PARASITE_PERSISTENT,
+                                      (gint) app_gfx.surplus_bytes_size,
+                                      app_gfx.p_surplus_bytes);
 
-        // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
-         parasite = gimp_parasite_new("ROM-BIN-SURPLUS-BYTES",
-                                       GIMP_PARASITE_PERSISTENT,
-                                       app_gfx.surplus_bytes_size,
-                                       app_gfx.p_surplus_bytes);
-         gimp_image_attach_parasite(new_image_id, 
-                                    parasite);
-         gimp_parasite_free (parasite);
+        gimp_image_attach_parasite (image, parasite);
+
+        gimp_parasite_free (parasite);
 
         // Free the surplus bytes now that they are stored as a parasite
-        free(app_gfx.p_surplus_bytes);
+        free (app_gfx.p_surplus_bytes);
+        app_gfx.p_surplus_bytes = NULL;
     }
 
-
-    // We're done with the drawable
-    gimp_drawable_flush(drawable);
-    gimp_drawable_detach(drawable);
-
     // Free the image data
-    free(app_gfx.p_data);
+    free (app_gfx.p_data);
 
     // Free the color map data
-    free(colorpal.p_data);
+    free (colorpal.p_data);
 
-    // Add the layer to the image
-    gimp_image_insert_layer(new_image_id, new_layer_id, -1, 0);
-
-    // Set the filename
-    gimp_image_set_filename(new_image_id, filename);
-
-    return new_image_id;
+    return image;
 }

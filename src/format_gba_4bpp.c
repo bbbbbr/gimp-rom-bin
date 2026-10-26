@@ -87,7 +87,7 @@ static const rom_gfx_attrib rom_attrib = {
 static int bin_decode_image(rom_gfx_data * p_rom_gfx,
                             app_gfx_data * p_app_gfx)
 {
-    unsigned char pixdata;
+    unsigned char pixdata = 0;
     unsigned char * p_image_pixel;
     long int      rom_offset;
     long int      tile_size_in_bytes;

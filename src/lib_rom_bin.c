@@ -88,6 +88,108 @@ static int (*function_map_encode[])(rom_gfx_data *,
 
 
 
+//
+// The list of decodable/encodable formats, shared by the import/export
+// dialog and by the "mode" argument of every registered procedure.
+//
+// Order matters: it's the order the formats show up in the dialog.
+//
+static const rom_bin_mode_entry rom_bin_mode_list_data[] = {
+
+    { "nes-1bpp",        BIN_MODE_NES_1BPP,      "1bpp NES",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_NES },
+
+    { "nes-2bpp",        BIN_MODE_NES_2BPP,      "2bpp NES",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_NES },
+
+    { "snesgb-2bpp",     BIN_MODE_SNESGB_2BPP,   "2bpp SNES/GB",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_GB | ROM_BIN_EXT_MASK_SNES },
+
+    { "ngpc-2bpp",       BIN_MODE_NGPC_2BPP,     "2bpp NGPC",
+      ROM_BIN_EXT_MASK_GENERIC },
+
+    { "snes-3bpp",       BIN_MODE_SNES_3BPP,     "3bpp SNES",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_SNES },
+
+    { "gba-4bpp",        BIN_MODE_GBA_4BPP,      "4bpp GBA",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_GBA },
+
+    { "snes-4bpp",       BIN_MODE_SNES_4BPP,     "4bpp SNES",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_SNES },
+
+    { "ggsms-4bpp",      BIN_MODE_GGSMSWSC_4BPP, "4bpp GG/SMS/WSC",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_SMSGG },
+
+    { "gens-4bpp",       BIN_MODE_GENS_4BPP,     "4bpp GEN",
+      ROM_BIN_EXT_MASK_GENERIC },
+
+    { "casioloopy-4bpp", BIN_MODE_CASIOLOOPY_4BPP, "4bpp Casio Loopy",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_CASIOLOOPY },
+
+    { "gba-8bpp",        BIN_MODE_GBA_8BPP,      "8bpp GBA",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_GBA },
+
+    { "snes-8bpp",       BIN_MODE_SNES_8BPP,     "8bpp SNES",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_SNES },
+
+    { "casioloopy-8bpp", BIN_MODE_CASIOLOOPY_8BPP, "8bpp Casio Loopy",
+      ROM_BIN_EXT_MASK_GENERIC | ROM_BIN_EXT_MASK_CASIOLOOPY },
+};
+
+
+
+const rom_bin_mode_entry * rom_bin_mode_list(int * p_count)
+{
+    if (p_count)
+        *p_count = G_N_ELEMENTS(rom_bin_mode_list_data);
+
+    return rom_bin_mode_list_data;
+}
+
+
+const rom_bin_mode_entry * rom_bin_mode_entry_by_mode(int mode)
+{
+    unsigned int i;
+
+    for (i = 0; i < G_N_ELEMENTS(rom_bin_mode_list_data); i++) {
+        if (rom_bin_mode_list_data[i].mode == mode)
+            return &rom_bin_mode_list_data[i];
+    }
+
+    return NULL;
+}
+
+
+const rom_bin_mode_entry * rom_bin_mode_entry_by_nick(const gchar * nick)
+{
+    unsigned int i;
+
+    if (nick == NULL)
+        return NULL;
+
+    for (i = 0; i < G_N_ELEMENTS(rom_bin_mode_list_data); i++) {
+        if (g_strcmp0(rom_bin_mode_list_data[i].nick, nick) == 0)
+            return &rom_bin_mode_list_data[i];
+    }
+
+    return NULL;
+}
+
+
+bool rom_bin_mode_matches_ext_mode(const rom_bin_mode_entry * p_entry,
+                                   int ext_mode)
+{
+    // The generic (".bin") dialog offers every format
+    if (ext_mode == BIN_EXT_MODE_GENERIC)
+        return true;
+
+    if (p_entry == NULL)
+        return false;
+
+    return (p_entry->ext_mask & ROM_BIN_EXT_MASK_GROUP(ext_mode)) != 0;
+}
+
+
 void rom_bin_init_structs(rom_gfx_data * p_rom_gfx,
                           app_gfx_data * p_app_gfx,
                           app_color_data * p_colorpal)

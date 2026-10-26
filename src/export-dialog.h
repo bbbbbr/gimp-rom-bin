@@ -1,5 +1,5 @@
 /*=======================================================================
-              SNES bin load / save plugin for the GIMP
+              ROM bin load / save plugin for the GIMP
                  Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify
@@ -16,4 +16,17 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-int import_export_dialog(int *, const gchar *, int ext_mode);
+#ifndef ROM_BIN_EXPORT_DIALOG_HEADER
+#define ROM_BIN_EXPORT_DIALOG_HEADER
+
+#include <glib.h>
+#include <libgimp/gimp.h>
+
+// Builds the format picker on top of the procedure's own arguments and
+// runs it. Returns FALSE when the user cancelled.
+gboolean rom_bin_settings_dialog(GimpProcedure * procedure,
+                                 GimpProcedureConfig * config,
+                                 const gchar * title,
+                                 const gchar * ok_label);
+
+#endif // ROM_BIN_EXPORT_DIALOG_HEADER

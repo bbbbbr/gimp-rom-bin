@@ -17,5 +17,7 @@
 =======================================================================*/
 
 #include <glib.h>
+#include <gio/gio.h>
+#include <libgimp/gimp.h>
 
-int read_rom_bin(const gchar *, int);
+GimpImage * read_rom_bin(GFile * file, int image_mode, GError ** error);

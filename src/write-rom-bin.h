@@ -17,5 +17,9 @@
 =======================================================================*/
 
 #include <glib.h>
+#include <gio/gio.h>
+#include <libgimp/gimp.h>
 
-int write_rom_bin(const gchar *, gint, gint, int);
+gboolean write_rom_bin(GFile * file, GimpImage * image,
+                       GimpDrawable * drawable, int image_mode,
+                       GError ** error);

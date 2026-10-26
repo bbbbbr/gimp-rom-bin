@@ -25,120 +25,152 @@
 #include <string.h>
 #include <libgimp/gimp.h>
 
-int write_rom_bin(const gchar * filename, gint image_id, gint drawable_id, int image_mode)
+//
+// Encode a layer of an INDEXED image into a ROM / tile file.
+//
+// GIMP 3 changes that matter here:
+//   * the drawable is a GObject, pixel data comes from a GeglBuffer
+//   * reading the buffer in the drawable's *native* format yields palette
+//     indexes (1 byte, or 2 with an alpha channel), which is what the
+//     encoders expect, no RGB conversion involved
+//   * the file is written through GFile so that remote/URI targets work
+//
+gboolean write_rom_bin (GFile * filename, GimpImage * image,
+                        GimpDrawable * drawable, int image_mode,
+                        GError ** error)
 {
-    int status;
-
-    GimpDrawable * drawable;
-    GimpPixelRgn rgn;
+    GeglBuffer   * buffer;
+    const Babl   * format;
     GimpParasite * img_parasite;
 
-    FILE * file;
-
-    status = 0; // Default to success
-
     app_gfx_data   app_gfx;
-    app_color_data colorpal; // TODO: rename to app_colorpal?
+    app_color_data colorpal;
     rom_gfx_data   rom_gfx;
 
-    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
+    rom_bin_init_structs (&rom_gfx, &app_gfx, &colorpal);
 
     app_gfx.image_mode = image_mode;
 
 
-    // Get the drawable
-    drawable = gimp_drawable_get(drawable_id);
-
-    // Get the Bytes Per Pixel of the incoming app image
-    app_gfx.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
-
-    // Abort if it's not 1 or 2 bytes per pixel
-    // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
-    if (app_gfx.bytes_per_pixel >= BIN_BITDEPTH_LAST) {
-        return 0;
+    // Only indexed images make sense for these formats. The bytes per
+    // pixel doubles when the layer has an alpha channel.
+    if (! gimp_drawable_is_indexed (drawable))
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Only indexed images can be written to ROM bin "
+                     "formats. Convert the image (Image -> Mode -> "
+                     "Indexed) first.");
+        return FALSE;
     }
 
-    // Get a pixel region from the layer
-    gimp_pixel_rgn_init(&rgn,
-                        drawable,
-                        0, 0,
-                        drawable->width,
-                        drawable->height,
-                        FALSE, FALSE);
+    app_gfx.bytes_per_pixel = (unsigned char) gimp_drawable_get_bpp (drawable);
 
+    if ((app_gfx.bytes_per_pixel < BIN_BITDEPTH_INDEXED) ||
+        (app_gfx.bytes_per_pixel >= BIN_BITDEPTH_LAST))
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Unsupported image depth (%d bytes per pixel)",
+                     app_gfx.bytes_per_pixel);
+        return FALSE;
+    }
 
-    // Determine the array size for the app's image then allocate it
-    app_gfx.width   = drawable->width;
-    app_gfx.height  = drawable->height;
-    app_gfx.size    =  drawable->width * drawable->height * app_gfx.bytes_per_pixel;
-    app_gfx.p_data  = malloc(app_gfx.size);
+    // Determine the array size for the image then allocate it
+    app_gfx.width  = (unsigned int) gimp_drawable_get_width  (drawable);
+    app_gfx.height = (unsigned int) gimp_drawable_get_height (drawable);
+    app_gfx.size   = (int) (app_gfx.width * app_gfx.height *
+                            app_gfx.bytes_per_pixel);
 
-    // Get the image data
-    gimp_pixel_rgn_get_rect(&rgn,
-                            app_gfx.p_data,
-                            0, 0,
-                            drawable->width,
-                            drawable->height);
+    if (NULL == (app_gfx.p_data = malloc ((size_t) app_gfx.size)))
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_NOSPC,
+                     "Out of memory while exporting the image");
+        return FALSE;
+    }
 
+    // Get the image data, in the native (indexed) format of the layer
+    buffer = gimp_drawable_get_buffer (drawable);
+    format = gimp_drawable_get_format (drawable);
+
+    gegl_buffer_get (buffer,
+                     GEGL_RECTANGLE (0, 0,
+                                     (gint) app_gfx.width,
+                                     (gint) app_gfx.height),
+                     1.0,
+                     format,
+                     app_gfx.p_data,
+                     GEGL_AUTO_ROWSTRIDE,
+                     GEGL_ABYSS_NONE);
+
+    g_object_unref (buffer);
 
 
     // TODO: move parasite metadata handling into a function?
-    img_parasite = gimp_image_get_parasite(image_id,
-                                           "ROM-BIN-SURPLUS-BYTES");
+    img_parasite = gimp_image_get_parasite (image, "ROM-BIN-SURPLUS-BYTES");
 
-    if (img_parasite) {
-        printf("Found parasite size %d\n", img_parasite->size);
+    if (img_parasite)
+    {
+        // Load surplus (non-encodable) bytes stashed in the gimp metadata
+        // parasite at load time, so they get appended back to the file
+        app_gfx.surplus_bytes_size = (long int) img_parasite->size;
 
-        // Load surplus (non-encodable) bytes stashed in the gimp metadata parasite
-        app_gfx.surplus_bytes_size = img_parasite->size;
+        if (app_gfx.surplus_bytes_size > 0)
+        {
+            if (NULL == (app_gfx.p_surplus_bytes =
+                             malloc ((size_t) app_gfx.surplus_bytes_size)))
+            {
+                gimp_parasite_free (img_parasite);
+                free (app_gfx.p_data);
 
-        if (NULL == (app_gfx.p_surplus_bytes = malloc(app_gfx.surplus_bytes_size)) ) {
-            // TODO: handle and centralize freeing these buffers better
-            free(app_gfx.p_data);
-            free(app_gfx.p_surplus_bytes);
-            free(rom_gfx.p_data);
-            return 0;
+                g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_NOSPC,
+                             "Out of memory while exporting the image");
+                return FALSE;
+            }
+
+            memcpy (app_gfx.p_surplus_bytes,
+                    (unsigned char *) img_parasite->data,
+                    (size_t) app_gfx.surplus_bytes_size);
         }
 
-        memcpy(app_gfx.p_surplus_bytes,
-               (unsigned char *)img_parasite->data,
-               img_parasite->size);
+        gimp_parasite_free (img_parasite);
     }
 
 
+    // Turn the pixel indexes back into rom / tile data
+    rom_bin_encode (&rom_gfx, &app_gfx);
 
-    status = rom_bin_encode(&rom_gfx,
-                            &app_gfx);
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
-    if (status != 0) { };
-
 
     // Free the image data
-    free(app_gfx.p_data);
-    free(app_gfx.p_surplus_bytes);
+    free (app_gfx.p_data);
+    free (app_gfx.p_surplus_bytes);
 
-    // Detach the drawable
-    gimp_drawable_detach(drawable);
-
-    // Make sure that the write was successful
-    if(rom_gfx.size == FALSE)
+    // Make sure that the encode produced something to write
+    if (rom_gfx.size <= 0 || rom_gfx.p_data == NULL)
     {
-        free(rom_gfx.p_data);
-        return 0;
+        free (rom_gfx.p_data);
+
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Nothing to write, the image did not encode to any "
+                     "rom data");
+        return FALSE;
     }
 
-    // Open the file
-    file = fopen(filename, "wb");
-    if(!file)
+    // Write the data out
+    if (! g_file_replace_contents (filename,
+                                   (const gchar *) rom_gfx.p_data,
+                                   (gsize) rom_gfx.size,
+                                   NULL,     // etag
+                                   FALSE,    // make backup
+                                   G_FILE_CREATE_NONE,
+                                   NULL,     // new etag
+                                   NULL,     // cancellable
+                                   error))
     {
-        free(rom_gfx.p_data);
-        return 0;
+        free (rom_gfx.p_data);
+        return FALSE;
     }
 
-    // Write the data and close it
-    fwrite(rom_gfx.p_data, rom_gfx.size, 1, file);
-    free(rom_gfx.p_data);
-    fclose(file);
+    free (rom_gfx.p_data);
 
-    return 1;
+    return TRUE;
 }

@@ -66,6 +66,42 @@
         BIN_BITDEPTH_LAST
     };
 
+    // Name of the GIMP procedure argument that carries the image format
+    #define MODE_ARGUMENT  "mode"
+
+    //
+    // Description of a single image format as it is offered in the
+    // import/export dialog and stored in the "mode" procedure argument.
+    //
+    // The nick is a stable, machine readable id (it ends up in GIMP's
+    // sessionrc as the last used value), the label is what the user sees.
+    //
+    typedef struct rom_bin_mode_entry {
+        const gchar * nick;      // stable id for the procedure "mode" argument
+        int           mode;      // matching enum rom_bin_modes value
+        const gchar * label;     // human readable name shown in the dialog
+        unsigned int  ext_mask;  // extension groups that offer this mode
+    } rom_bin_mode_entry;
+
+    // Which dialog groups a mode is listed in. BIN_EXT_MODE_GENERIC means
+    // "listed in the catch-all .bin dialog", so a bit per extension group.
+    #define ROM_BIN_EXT_MASK_ALL       (0xFFFFFFFFu)
+    #define ROM_BIN_EXT_MASK_GROUP(g)  (1u << (g))
+
+    #define ROM_BIN_EXT_MASK_GENERIC    ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_GENERIC)
+    #define ROM_BIN_EXT_MASK_GB         ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_GB)
+    #define ROM_BIN_EXT_MASK_NES        ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_NES)
+    #define ROM_BIN_EXT_MASK_SMSGG      ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_SMSGG)
+    #define ROM_BIN_EXT_MASK_SNES       ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_SNES)
+    #define ROM_BIN_EXT_MASK_GBA        ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_GBA)
+    #define ROM_BIN_EXT_MASK_CASIOLOOPY ROM_BIN_EXT_MASK_GROUP(BIN_EXT_MODE_CASIOLOOPY)
+
+    const rom_bin_mode_entry * rom_bin_mode_list(int * p_count);
+    const rom_bin_mode_entry * rom_bin_mode_entry_by_mode(int mode);
+    const rom_bin_mode_entry * rom_bin_mode_entry_by_nick(const gchar * nick);
+    bool rom_bin_mode_matches_ext_mode(const rom_bin_mode_entry * p_entry,
+                                       int ext_mode);
+
     // TODO: move these to lib_rom_bin.h
 
         typedef struct rom_gfx_attrib {

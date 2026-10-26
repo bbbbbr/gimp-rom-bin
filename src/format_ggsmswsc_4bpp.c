@@ -87,7 +87,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
                             app_gfx_data * p_app_gfx)
 {
     unsigned char pixel_val;
-    unsigned char pixdata[4];
+    unsigned char pixdata[4] = { 0 };
     unsigned char * p_image_pixel;
     long int      rom_offset;
     long int      tile_size_in_bytes;
@@ -176,7 +176,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
 static int bin_encode_image(rom_gfx_data * p_rom_gfx,
                             app_gfx_data * p_app_gfx)
 {
-    unsigned char pixdata[4];
+    unsigned char pixdata[4] = { 0 };
     unsigned char * p_image_pixel;
     long int      rom_offset;
     unsigned int  transparency_flag;

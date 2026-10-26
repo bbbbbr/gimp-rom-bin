@@ -46,456 +46,499 @@ const char SAVE_PROCEDURE_CASIOLOOPY[]      = "file-bin-bin-save-casioloopy";
 
 const char BINARY_NAME[]    = "file-rom-bin";
 
-// Predeclare our entrypoints
-static void query(void);
-static void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
+// The name of the procedure argument holding the ROM image format is
+// defined in lib_rom_bin.h as MODE_ARGUMENT. It is registered as a
+// "choice" argument so that GIMP remembers the last used value between
+// invocations (it used to be a plain combo box in the plugin's own
+// dialog, which was forgotten every time).
 
-// Declare our plugin entry points
-GimpPlugInInfo PLUG_IN_INFO = {
-    NULL,
-    NULL,
-    query,
-    run
+// Sentinel for "the format can not be guessed from the extension, ask"
+#define ROM_BIN_MODE_ASK (-1)
+
+
+//
+// Describes one file handler (a load and/or an export procedure).
+//
+typedef struct {
+    const gchar * name;
+    const gchar * extensions;
+    const gchar * menu_label;
+    const gchar * blurb;
+
+    // Which subset of the supported formats the format picker offers
+    int ext_mode;
+
+    // Format implied by the extension, ROM_BIN_MODE_ASK to show the picker
+    int fixed_mode;
+
+    // Pre-selected format: what the dialog starts with, and what is used
+    // when no dialog can be shown (batch runs, thumbnailing, ...) unless
+    // the caller passes an explicit "mode" argument
+    const gchar * default_nick;
+} rom_file_handler;
+
+
+static const rom_file_handler rom_load_handlers[] = {
+    { LOAD_PROCEDURE,
+      "bin",
+      "ROM bin image",
+      "Loads images in the ROM bin file format",
+      BIN_EXT_MODE_GENERIC,
+      ROM_BIN_MODE_ASK,
+      "snes-4bpp" },
+
+    { LOAD_PROCEDURE_NES2BPP_CHRNES,
+      "chr,nes",
+      "ROM NES .chr and .nes image 2-bpp",
+      "Loads images in the NES .chr and .nes 2-bpp file format",
+      BIN_EXT_MODE_NES,
+      BIN_MODE_NES_2BPP,
+      NULL },
+
+    { LOAD_PROCEDURE_GB2BPP_GB,
+      "gb,gbc,2bpp,duck,md0,md1,md2",
+      "ROM GB .gb .gbc .duck .md0 .md1 .md2 image 2-bpp",
+      "Loads images in the GameBoy .gb .gbc 2-bpp file format",
+      BIN_EXT_MODE_GB,
+      BIN_MODE_SNESGB_2BPP,
+      NULL },
+
+    { LOAD_PROCEDURE_GGSMS4BPP_GGSMS,
+      "gg,sms",
+      "ROM SMS/GG .sms .gg image 4-bpp",
+      "Loads images in SMS/GameGear .gg .sms 4-bpp file format",
+      BIN_EXT_MODE_SMSGG,
+      BIN_MODE_GGSMSWSC_4BPP,
+      NULL },
+
+    { LOAD_PROCEDURE_SNES,
+      "sfc,smc",
+      "ROM SNES .sfc .smc image",
+      "Loads ROM images in SNES .sfc .smc formats",
+      BIN_EXT_MODE_SNES,
+      ROM_BIN_MODE_ASK,
+      "snes-4bpp" },
+
+    { LOAD_PROCEDURE_GBA,
+      "gba",
+      "ROM GBA .gba image",
+      "Loads ROM images in GBA .gba formats",
+      BIN_EXT_MODE_GBA,
+      ROM_BIN_MODE_ASK,
+      "gba-4bpp" },
+
+    { LOAD_PROCEDURE_CASIOLOOPY,
+      "loopy",
+      "ROM Casio Loopy .loopy image",
+      "Loads ROM images in Casio Loopy .loopy formats",
+      BIN_EXT_MODE_CASIOLOOPY,
+      ROM_BIN_MODE_ASK,
+      "casioloopy-4bpp" },
 };
 
-MAIN()
 
-// The query function
-static void query(void)
+static const rom_file_handler rom_export_handlers[] = {
+    { SAVE_PROCEDURE,
+      "bin",
+      "ROM bin image",
+      "Saves files in the ROM bin image format",
+      BIN_EXT_MODE_GENERIC,
+      ROM_BIN_MODE_ASK,
+      "snes-4bpp" },
+
+    { SAVE_PROCEDURE_NES2BPP_CHRNES,
+      "chr,nes",
+      "CHR NES 2bpp bin image",
+      "Saves files in the NES .chr and .nes 2-bpp image format",
+      BIN_EXT_MODE_NES,
+      BIN_MODE_NES_2BPP,
+      NULL },
+
+    { SAVE_PROCEDURE_GB2BPP_GB,
+      "gb,gbc,2bpp",
+      "GameBoy .gb .gbc 2bpp bin image",
+      "Saves files in the GameBoy .gb .gbc 2-bpp image format",
+      BIN_EXT_MODE_GB,
+      BIN_MODE_SNESGB_2BPP,
+      NULL },
+
+    { SAVE_PROCEDURE_GGSMS4BPP_GGSMS,
+      "gg,sms",
+      "SMS/GG .sms .gg image 4-bpp",
+      "Saves files in SMS/GameGear .gg .sms 4-bpp file format",
+      BIN_EXT_MODE_SMSGG,
+      BIN_MODE_GGSMSWSC_4BPP,
+      NULL },
+
+    { SAVE_PROCEDURE_SNES,
+      "sfc,smc",
+      "SNES .sfc .smc image",
+      "Saves files in SNES .sfc .smc ROM formats",
+      BIN_EXT_MODE_SNES,
+      ROM_BIN_MODE_ASK,
+      "snes-4bpp" },
+
+    { SAVE_PROCEDURE_GBA,
+      "gba",
+      "GBA .gba image",
+      "Saves files in GBA .gba ROM formats",
+      BIN_EXT_MODE_GBA,
+      ROM_BIN_MODE_ASK,
+      "gba-4bpp" },
+
+    { SAVE_PROCEDURE_CASIOLOOPY,
+      "loopy",
+      "Casio Loopy .loopy image",
+      "Saves files in Casio Loopy .loopy ROM formats",
+      BIN_EXT_MODE_CASIOLOOPY,
+      ROM_BIN_MODE_ASK,
+      "casioloopy-4bpp" },
+};
+
+
+//
+// Plug-in class boilerplate (GIMP 3 replaced the PLUG_IN_INFO struct and
+// the query()/run() entry points with a GObject derived from GimpPlugIn)
+//
+typedef struct _RomBin      RomBin;
+typedef struct _RomBinClass RomBinClass;
+
+struct _RomBin
 {
-    // Load arguments
-    static const GimpParamDef load_arguments[] =
-    {
-        { GIMP_PDB_INT32,  "run-mode",     "Interactive, non-interactive" },
-        { GIMP_PDB_STRING, "filename",     "The name of the file to load" },
-        { GIMP_PDB_STRING, "raw-filename", "The name entered" }
-    };
+    GimpPlugIn parent_instance;
+};
 
-    // Load return values
-    static const GimpParamDef load_return_values[] =
-    {
-        { GIMP_PDB_IMAGE, "image", "Output image" }
-    };
+struct _RomBinClass
+{
+    GimpPlugInClass parent_class;
+};
 
-    // Save arguments
-    static const GimpParamDef save_arguments[] =
-    {
-        { GIMP_PDB_INT32,    "run-mode",     "Interactive, non-interactive" },
-        { GIMP_PDB_IMAGE,    "image",        "Input image" },
-        { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
-        { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
-        { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-        { GIMP_PDB_FLOAT,    "image_mode",  "ROM image format" }
-    };
+#define ROM_BIN_TYPE  (rom_bin_get_type ())
+#define ROM_BIN(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), ROM_BIN_TYPE, RomBin))
 
-    // Install the load procedure for ".bin" files
-    gimp_install_procedure(LOAD_PROCEDURE,
-                           "Loads images in the ROM bin file format",
-                           "Loads images in the ROM bin file format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM GEN/SMS/SNES/NGPC/NES/GB(A) bin image",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
+GType                   rom_bin_get_type         (void) G_GNUC_CONST;
 
-    // Install the load procedure for ".chr" files (only NES chr 2bpp)
-    gimp_install_procedure(LOAD_PROCEDURE_NES2BPP_CHRNES,
-                           "Loads images in the NES .chr and .nes 2-bpp file format",
-                           "Loads images in the NES .chr and .nes 2-bpp file format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM NES .chr and .nes image 2-bpp",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
+static GList          * rom_bin_query_procedures (GimpPlugIn            *plug_in);
+static GimpProcedure  * rom_bin_create_procedure (GimpPlugIn            *plug_in,
+                                                  const gchar           *name);
+static gboolean         rom_bin_set_i18n         (GimpPlugIn            *plug_in,
+                                                  const gchar           *procedure_name,
+                                                  gchar                 **gettext_domain,
+                                                  gchar                 **catalog_dir);
 
-    // Install the load procedure for ".gb" files (only GB .gb image 2-bpp)
-    gimp_install_procedure(LOAD_PROCEDURE_GB2BPP_GB,
-                           "Loads images in the GameBoy .gb .gbc 2-bpp file format",
-                           "Loads images in the GameBoy .gb .gbc 2-bpp file format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM GB .gb .gbc .duck .md0 .md1 .md2 image 2-bpp",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
+static GimpValueArray * rom_bin_load             (GimpProcedure         *procedure,
+                                                  GimpRunMode            run_mode,
+                                                  GFile                 *file,
+                                                  GimpMetadata          *metadata,
+                                                  GimpMetadataLoadFlags *flags,
+                                                  GimpProcedureConfig   *config,
+                                                  gpointer               run_data);
 
-    gimp_install_procedure(LOAD_PROCEDURE_GGSMS4BPP_GGSMS,
-                           "Loads images in SMS/GameGear .gg .sms 4-bpp file format",
-                           "Loads images in SMS/GameGear .gg .sms 4-bpp file format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM SMS/GG .sms .gg image 4-bpp",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
+static GimpValueArray * rom_bin_export           (GimpProcedure         *procedure,
+                                                  GimpRunMode            run_mode,
+                                                  GimpImage             *image,
+                                                  GFile                 *file,
+                                                  GimpExportOptions     *options,
+                                                  GimpMetadata          *metadata,
+                                                  GimpProcedureConfig   *config,
+                                                  gpointer               run_data);
 
-    gimp_install_procedure(LOAD_PROCEDURE_SNES,
-                           "Loads ROM images in SNES .sfc .smc formats",
-                           "Loads ROM images in SNES .sfc .smc formats",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM SNES .sfc .smc image",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
+G_DEFINE_TYPE (RomBin, rom_bin, GIMP_TYPE_PLUG_IN)
 
-    gimp_install_procedure(LOAD_PROCEDURE_GBA,
-                           "Loads ROM images in GBA .gba formats",
-                           "Loads ROM images in GBA .gba formats",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM GBA .gba image",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
-
-    gimp_install_procedure(LOAD_PROCEDURE_CASIOLOOPY,
-                           "Loads ROM images in Casio Loopy .loopy formats",
-                           "Loads ROM images in Casio Loopy .loopy formats",
-                           "--",
-                           "Copyright --",
-                           "2026",
-                           "ROM Casio Loopy .loopy image",
-                           NULL,
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(load_arguments),
-                           G_N_ELEMENTS(load_return_values),
-                           load_arguments,
-                           load_return_values);
-
-    // End LOAD, Begin SAVE
-
-    // Install the save procedure for ".bin" files (all formats)
-    gimp_install_procedure(SAVE_PROCEDURE,
-                           "Saves files in the ROM bin image format",
-                           "Saves files in the ROM bin image format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "ROM GEN/SMS/SNES/NGPC/NES/GB(A) bin image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    // Install the save procedure for ".chr" files (only NES chr 2bpp)
-    gimp_install_procedure(SAVE_PROCEDURE_NES2BPP_CHRNES,
-                           "Saves files in the NES .chr and .nes 2-bpp image format",
-                           "Saves files in the NES .chr and .nes 2-bpp image format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "CHR NES 2bpp bin image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    // Install the save procedure for ".gb .gbc 2bpp" files (GB 2bpp)
-    gimp_install_procedure(SAVE_PROCEDURE_GB2BPP_GB,
-                           "Saves files in the GameBoy .gb .gbc 2-bpp image format",
-                           "Saves files in the GameBoy .gb .gbc 2-bpp image format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "GameBoy .gb .gbc 2bpp bin image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    gimp_install_procedure(SAVE_PROCEDURE_GGSMS4BPP_GGSMS,
-                           "Saves files in SMS/GameGear .gg .sms 4-bpp file format",
-                           "Saves files in SMS/GameGear .gg .sms 4-bpp file format",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "SMS/GG .sms .gg image 4-bpp",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    gimp_install_procedure(SAVE_PROCEDURE_SNES,
-                           "Saves files in SNES .sfc .smc ROM formats",
-                           "Saves files in SNES .sfc .smc ROM formats",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "SNES .sfc .smc image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    gimp_install_procedure(SAVE_PROCEDURE_GBA,
-                           "Saves files in GBA .gba ROM formats",
-                           "Saves files in GBA .gba ROM formats",
-                           "--",
-                           "Copyright --",
-                           "2018",
-                           "GBA .gba image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
-
-    gimp_install_procedure(SAVE_PROCEDURE_CASIOLOOPY,
-                           "Saves files in Casio Loopy .loopy ROM formats",
-                           "Saves files in Casio Loopy .loopy ROM formats",
-                           "--",
-                           "Copyright --",
-                           "2026",
-                           "Casio Loopy .loopy image",
-                           "INDEXED*",
-                           GIMP_PLUGIN,
-                           G_N_ELEMENTS(save_arguments),
-                           0,
-                           save_arguments,
-                           NULL);
+GIMP_MAIN (ROM_BIN_TYPE)
 
 
-    // Register the load handlers
-    gimp_register_load_handler(LOAD_PROCEDURE, "bin", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp,duck,md0,md1,md2", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_SNES, "sfc,smc", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_GBA, "gba", "");
-    gimp_register_load_handler(LOAD_PROCEDURE_CASIOLOOPY, "loopy", "");
+static void rom_bin_class_init (RomBinClass * klass)
+{
+    GimpPlugInClass * plug_in_class = GIMP_PLUG_IN_CLASS (klass);
 
+    plug_in_class->query_procedures = rom_bin_query_procedures;
+    plug_in_class->create_procedure = rom_bin_create_procedure;
 
-    // Now register the save handlers
-    gimp_register_save_handler(SAVE_PROCEDURE, "bin", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_NES2BPP_CHRNES, "chr,nes", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_GB2BPP_GB, "gb,gbc,2bpp", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_GGSMS4BPP_GGSMS, "gg,sms", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_SNES, "sfc,smc", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_GBA, "gba", "");
-    gimp_register_save_handler(SAVE_PROCEDURE_CASIOLOOPY, "loopy", "");
-
-    // MIME handler registration is disabled for now, due to non-interactive
-    //gimp_register_file_handler_mime(LOAD_PROCEDURE, "image/bin");
-    //gimp_register_file_handler_mime(LOAD_PROCEDURE_NES_2BPP, "image/chr");
-    //gimp_register_file_handler_mime(SAVE_PROCEDURE, "image/bin");
-    //gimp_register_file_handler_mime(SAVE_PROCEDURE_NES2BPP_CHRNES, "image/chr");
+    // This plugin ships no translations; without this GIMP warns about a
+    // missing locale/ directory for every registered procedure
+    plug_in_class->set_i18n         = rom_bin_set_i18n;
 }
 
-// The run function
-static void run(const gchar * name,
-         gint nparams,
-         const GimpParam * param,
-         gint * nreturn_vals,
-         GimpParam ** return_vals)
+static gboolean rom_bin_set_i18n (GimpPlugIn   * plug_in,
+                                  const gchar  * procedure_name,
+                                  gchar       ** gettext_domain,
+                                  gchar       ** catalog_dir)
 {
-    // Create the return value.
-    static GimpParam return_values[2];
-    *nreturn_vals = 1;
-    *return_vals  = return_values;
+    return FALSE;
+}
 
-    GimpRunMode   run_mode;
-    run_mode      = param[0].data.d_int32;
+static void rom_bin_init (RomBin * rom_bin)
+{
+}
 
-    // Set the return value to success by default
-    return_values[0].type          = GIMP_PDB_STATUS;
-    return_values[0].data.d_status = GIMP_PDB_SUCCESS;
+static GList * rom_bin_query_procedures (GimpPlugIn * plug_in)
+{
+    GList      * list = NULL;
+    unsigned int i;
 
+    for (i = 0; i < G_N_ELEMENTS(rom_load_handlers); i++)
+        list = g_list_append (list, g_strdup (rom_load_handlers[i].name));
 
-    // Check to see if this is the load procedure
-    if( !strcmp(name, LOAD_PROCEDURE) ||
-        !strcmp(name, LOAD_PROCEDURE_NES2BPP_CHRNES) ||
-        !strcmp(name, LOAD_PROCEDURE_GB2BPP_GB) ||
-        !strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS) ||
-        !strcmp(name, LOAD_PROCEDURE_SNES) ||
-        !strcmp(name, LOAD_PROCEDURE_GBA) ||
-        !strcmp(name, LOAD_PROCEDURE_CASIOLOOPY))
-    {
-        int new_image_id;
-        int image_mode = -1;
+    for (i = 0; i < G_N_ELEMENTS(rom_export_handlers); i++)
+        list = g_list_append (list, g_strdup (rom_export_handlers[i].name));
 
-        // Check to make sure all parameters were supplied
-        if(nparams != 3) {
-            return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
-            return;
-        }
+    return list;
+}
 
+// Find the description of a handler by procedure name
+static const rom_file_handler * find_handler (const gchar * name)
+{
+    unsigned int i;
 
-        // Try to export the image
-        gimp_ui_init(BINARY_NAME, FALSE);
+    for (i = 0; i < G_N_ELEMENTS(rom_load_handlers); i++)
+        if (!strcmp (name, rom_load_handlers[i].name))
+            return &rom_load_handlers[i];
 
+    for (i = 0; i < G_N_ELEMENTS(rom_export_handlers); i++)
+        if (!strcmp (name, rom_export_handlers[i].name))
+            return &rom_export_handlers[i];
 
-        // Determine image file format, by load type or user dialog
-        // * .chr and .nes files auto-default to NES 2bpp,
-        // * .gb files auto-default to SNESGB 2bpp,
-        // etc.
-        //
-        //   no need to show image format selection dialog
-        if(!strcmp(name, LOAD_PROCEDURE_NES2BPP_CHRNES))
-            // TODO: ?try to auto detect 1bpp vs 2bpp mode based on file size (4k = 1bpp, 4k+ = 2bpp)
-            image_mode = BIN_MODE_NES_2BPP;
-        else if(!strcmp(name, LOAD_PROCEDURE_GB2BPP_GB))
-            image_mode = BIN_MODE_SNESGB_2BPP;
-        else if(!strcmp(name, LOAD_PROCEDURE_GGSMS4BPP_GGSMS))
-            image_mode = BIN_MODE_GGSMSWSC_4BPP;
-        else {
-            int ext_mode = BIN_EXT_MODE_GENERIC;
+    return NULL;
+}
 
-            // SNES/GBA/Casio Loopy have multiple formats. Instead of forcing one, pass a hint to filter the dialog
-            if      (!strcmp(name, LOAD_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
-            else if (!strcmp(name, LOAD_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
-            else if (!strcmp(name, LOAD_PROCEDURE_CASIOLOOPY))  ext_mode = BIN_EXT_MODE_CASIOLOOPY;
+// Add the "which ROM format" picker, unless the extension already decided
+static void add_mode_argument (GimpProcedure              * procedure,
+                               const rom_file_handler     * handler)
+{
+    const rom_bin_mode_entry * modes;
+    GimpChoice               * choice;
+    int                        count;
+    int                        i;
 
-            // Only show settings dialog during interactive mode
-            // - Thumbnail preview creation happens in GIMP_RUN_NONINTERACTIVE mode
-            // - TODO: GIMP_RUN_WITH_LAST_VALS
-            if (GIMP_RUN_INTERACTIVE == run_mode) {
+    if (handler->fixed_mode != ROM_BIN_MODE_ASK)
+        return;
 
-                // Show the import/export dialog
-                if(!import_export_dialog(&image_mode, name, ext_mode)) {
-                    return_values[0].data.d_status = GIMP_PDB_CANCEL;
-                    return;
-                }
-            }
-            else if (GIMP_RUN_NONINTERACTIVE == run_mode) {
+    modes  = rom_bin_mode_list (&count);
+    choice = gimp_choice_new ();
 
-                // Default to SNES 4bpp for non-interactive mode
-                image_mode = BIN_MODE_SNES_4BPP;
-            }
-        }
+    for (i = 0; i < count; i++) {
 
+        if (! rom_bin_mode_matches_ext_mode (&modes[i], handler->ext_mode))
+            continue;
 
-        // Now read the image
-        new_image_id = read_rom_bin(param[1].data.d_string, image_mode);
-
-        // Check for an error
-        if(new_image_id == -1)
-        {
-            return_values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
-            return;
-        }
-
-        // Fill in the second return value
-        *nreturn_vals = 2;
-
-        return_values[1].type         = GIMP_PDB_IMAGE;
-        return_values[1].data.d_image = new_image_id;
+        gimp_choice_add (choice,
+                         modes[i].nick,
+                         modes[i].mode,
+                         modes[i].label,
+                         NULL);
     }
-    else if(!strcmp(name, SAVE_PROCEDURE) ||
-            !strcmp(name, SAVE_PROCEDURE_NES2BPP_CHRNES) ||
-            !strcmp(name, SAVE_PROCEDURE_GB2BPP_GB) ||
-            !strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS) ||
-            !strcmp(name, SAVE_PROCEDURE_SNES) ||
-            !strcmp(name, SAVE_PROCEDURE_GBA) ||
-            !strcmp(name, SAVE_PROCEDURE_CASIOLOOPY))
-    {
-        // This is the export procedure
 
-        gint32 image_id, drawable_id;
-        int status = 1;
-        int image_mode = -1;
-        GimpExportReturn export_ret;
+    // gimp_procedure_add_choice_argument() takes ownership of the choice
+    gimp_procedure_add_choice_argument (procedure,
+                                        MODE_ARGUMENT,
+                                        "_Image format",
+                                        handler->blurb,
+                                        choice,
+                                        handler->default_nick,
+                                        G_PARAM_READWRITE);
+}
 
-        // Check to make sure all of the parameters were supplied
-        if(nparams != 6)
-        {
-            return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
-            return;
-        }
+static GimpProcedure * rom_bin_create_procedure (GimpPlugIn  * plug_in,
+                                                 const gchar * name)
+{
+    const rom_file_handler * handler;
+    GimpProcedure          * procedure = NULL;
+    gboolean                 is_load;
+    unsigned int             i;
 
-        image_id    = param[1].data.d_int32;
-        drawable_id = param[2].data.d_int32;
+    handler = find_handler (name);
+    if (handler == NULL)
+        return NULL;
 
-        // Try to export the image
-        gimp_ui_init(BINARY_NAME, FALSE);
-        export_ret = gimp_export_image(&image_id,
-                                       &drawable_id,
-                                       "BIN",
-                                       GIMP_EXPORT_CAN_HANDLE_INDEXED |
-                                       GIMP_EXPORT_CAN_HANDLE_ALPHA);
+    is_load = FALSE;
+    for (i = 0; i < G_N_ELEMENTS(rom_load_handlers); i++)
+        if (!strcmp (name, rom_load_handlers[i].name))
+            is_load = TRUE;
 
-        switch(export_ret)
-        {
-            case GIMP_EXPORT_EXPORT:
-            case GIMP_EXPORT_IGNORE:
+    if (is_load) {
 
-                // Only call the export dialog if it is "bin" and not NES 2bpp ".chr" mode
-              if(!strcmp(name, SAVE_PROCEDURE_NES2BPP_CHRNES)) {
-                image_mode = BIN_MODE_NES_2BPP;
-              }
-              else if(!strcmp(name, SAVE_PROCEDURE_GB2BPP_GB)) {
-                image_mode = BIN_MODE_SNESGB_2BPP;
-              }
-              else if(!strcmp(name, SAVE_PROCEDURE_GGSMS4BPP_GGSMS)) {
-                image_mode = BIN_MODE_GGSMSWSC_4BPP;
-              }
-              else {
-                int ext_mode = BIN_EXT_MODE_GENERIC;
+        procedure = gimp_load_procedure_new (plug_in, name,
+                                             GIMP_PDB_PROC_TYPE_PLUGIN,
+                                             rom_bin_load,
+                                             (gpointer) handler, NULL);
 
-                // SNES/GBA/Casio Loopy have multiple formats. Instead of forcing one, pass a hint to filter the dialog
-                if      (!strcmp(name, SAVE_PROCEDURE_SNES)) ext_mode = BIN_EXT_MODE_SNES;
-                else if (!strcmp(name, SAVE_PROCEDURE_GBA))  ext_mode = BIN_EXT_MODE_GBA;
-                else if (!strcmp(name, SAVE_PROCEDURE_CASIOLOOPY))  ext_mode = BIN_EXT_MODE_CASIOLOOPY;
+        gimp_procedure_set_menu_label (procedure, handler->menu_label);
 
-                // Now get the settings
-                if(!import_export_dialog(&image_mode, name, ext_mode))
-                {
-                    return_values[0].data.d_status = GIMP_PDB_CANCEL;
-                    return;
-                }
-              }
+        gimp_procedure_set_documentation (procedure,
+                                          handler->blurb,
+                                          handler->blurb,
+                                          name);
 
-                status = write_rom_bin(param[3].data.d_string,
-                                       image_id, drawable_id, image_mode);
-                gimp_image_delete(image_id);
+        gimp_procedure_set_attribution (procedure,
+                                        "bbbbbr & others",
+                                        "GPLv3",
+                                        "2018");
 
-                break;
-
-            case GIMP_EXPORT_CANCEL:
-                return_values[0].data.d_status = GIMP_PDB_CANCEL;
-                return;
-        }
-
-        if(!status)
-            return_values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
+        gimp_file_procedure_set_extensions (GIMP_FILE_PROCEDURE (procedure),
+                                            handler->extensions);
     }
-    else
-        return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+    else {
+
+        procedure = gimp_export_procedure_new (plug_in, name,
+                                               GIMP_PDB_PROC_TYPE_PLUGIN,
+                                               FALSE,
+                                               rom_bin_export,
+                                               (gpointer) handler, NULL);
+
+        gimp_procedure_set_image_types (procedure, "INDEXED");
+
+        gimp_procedure_set_menu_label (procedure, handler->menu_label);
+
+        gimp_file_procedure_set_format_name (GIMP_FILE_PROCEDURE (procedure),
+                                             handler->menu_label);
+
+        gimp_procedure_set_documentation (procedure,
+                                          handler->blurb,
+                                          handler->blurb,
+                                          name);
+
+        gimp_procedure_set_attribution (procedure,
+                                        "bbbbbr & others",
+                                        "GPLv3",
+                                        "2018");
+
+        gimp_file_procedure_set_extensions (GIMP_FILE_PROCEDURE (procedure),
+                                            handler->extensions);
+
+        // Indexed pixel data (and the alpha channel that marks the
+        // "no data here" padding tiles) is what this plugin writes
+        gimp_export_procedure_set_capabilities (GIMP_EXPORT_PROCEDURE (procedure),
+                                                GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                                GIMP_EXPORT_CAN_HANDLE_ALPHA,
+                                                NULL, NULL, NULL);
+    }
+
+    add_mode_argument (procedure, handler);
+
+    return procedure;
+}
+
+// Work out which ROM format to use, showing the picker when needed
+static gboolean resolve_image_mode (const rom_file_handler   * handler,
+                                    GimpProcedure            * procedure,
+                                    GimpProcedureConfig      * config,
+                                    GimpRunMode               run_mode,
+                                    gint                    * p_image_mode)
+{
+    // The extension already told us (NES .chr, GameBoy .gb, SMS .sms, ...)
+    if (handler->fixed_mode != ROM_BIN_MODE_ASK) {
+        *p_image_mode = handler->fixed_mode;
+        return TRUE;
+    }
+
+    // Otherwise the format comes from the "mode" argument: either what the
+    // caller passed (scripted / batch use, or GIMP's remembered last value
+    // in RUN-WITH-LAST-VALS mode), or what the user picks in the dialog.
+    if (GIMP_RUN_INTERACTIVE == run_mode) {
+
+        gboolean is_load = GIMP_IS_LOAD_PROCEDURE (procedure);
+
+        gimp_ui_init (BINARY_NAME);
+
+        if (! rom_bin_settings_dialog (procedure, config,
+                                       is_load ? "Import ROM bin image"
+                                               : "Export ROM bin image",
+                                       is_load ? "_Open" : NULL))
+            return FALSE; // cancelled by the user
+    }
+
+    *p_image_mode = gimp_procedure_config_get_choice_id (config, MODE_ARGUMENT);
+
+    return TRUE;
+}
+
+static GimpValueArray * rom_bin_load (GimpProcedure         * procedure,
+                                      GimpRunMode            run_mode,
+                                      GFile                 * file,
+                                      GimpMetadata          * metadata,
+                                      GimpMetadataLoadFlags * flags,
+                                      GimpProcedureConfig   * config,
+                                      gpointer               run_data)
+{
+    const rom_file_handler * handler = (const rom_file_handler *) run_data;
+    GimpValueArray         * return_vals;
+    GimpImage              * image;
+    GError                 * error = NULL;
+    gint                     image_mode;
+
+    // The plugin talks to GIMP's GeglBuffers directly, which needs GEGL
+    // (and babl) to be initialized in the plugin process
+    gegl_init (NULL, NULL);
+
+    if (! resolve_image_mode (handler, procedure, config, run_mode, &image_mode))
+        return gimp_procedure_new_return_values (procedure, GIMP_PDB_CANCEL, NULL);
+
+    image = read_rom_bin (file, image_mode, &error);
+
+    if (image == NULL)
+        return gimp_procedure_new_return_values (procedure,
+                                                 GIMP_PDB_EXECUTION_ERROR,
+                                                 error);
+
+    return_vals = gimp_procedure_new_return_values (procedure,
+                                                    GIMP_PDB_SUCCESS,
+                                                    NULL);
+
+    GIMP_VALUES_SET_IMAGE (return_vals, 1, image);
+
+    return return_vals;
+}
+
+static GimpValueArray * rom_bin_export (GimpProcedure        * procedure,
+                                        GimpRunMode           run_mode,
+                                        GimpImage            * image,
+                                        GFile                * file,
+                                        GimpExportOptions    * options,
+                                        GimpMetadata         * metadata,
+                                        GimpProcedureConfig  * config,
+                                        gpointer              run_data)
+{
+    const rom_file_handler * handler = (const rom_file_handler *) run_data;
+    GimpPDBStatusType        status       = GIMP_PDB_SUCCESS;
+    GimpExportReturn         export_ret   = GIMP_EXPORT_IGNORE;
+    GimpImage              * export_image = image;
+    GimpDrawable           * drawable     = NULL;
+    GList                  * layers;
+    GError                 * error        = NULL;
+    gint                     image_mode;
+
+    // See rom_bin_load(): the GeglBuffer API needs GEGL initialized
+    gegl_init (NULL, NULL);
+
+    if (! resolve_image_mode (handler, procedure, config, run_mode, &image_mode))
+        return gimp_procedure_new_return_values (procedure, GIMP_PDB_CANCEL, NULL);
+
+    // Let GIMP do the "this image can not be exported as-is" conversions
+    // (flatten layers, drop unsupported modes, ...) for us
+    export_ret = gimp_export_options_get_image (options, &export_image);
+
+    layers = gimp_image_list_layers (export_image);
+
+    if (layers != NULL)
+        drawable = GIMP_DRAWABLE (layers->data);
+
+    if (drawable == NULL) {
+
+        status = GIMP_PDB_EXECUTION_ERROR;
+        g_set_error (&error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "The image has no layers to export");
+    }
+    else if (! write_rom_bin (file, export_image, drawable, image_mode, &error)) {
+
+        status = GIMP_PDB_EXECUTION_ERROR;
+    }
+
+    g_list_free (layers);
+
+    // The converted copy is ours to destroy
+    if (GIMP_EXPORT_EXPORT == export_ret)
+        gimp_image_delete (export_image);
+
+    return gimp_procedure_new_return_values (procedure, status, error);
 }

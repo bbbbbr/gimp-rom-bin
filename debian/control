@@ -1,13 +1,19 @@
-Source: gimp-webp
-Section: web
-Priority: extra
-Maintainer: Nathan Osman <admin@quickmediasolutions.com>
-Build-Depends: debhelper (>= 7.0.50~), libgimp2.0-dev, libwebp-dev
+Source: gimp-rom-bin
+Section: graphics
+Priority: optional
+Maintainer: bbbbbr
+Build-Depends: debhelper (>= 7.0.50~), libgimp-3.0-dev
 Standards-Version: 3.9.3
-Homepage: https://launchpad.net/gimp-webp
 
-Package: gimp-webp
+Package: gimp-rom-bin
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: A Gimp plugin that provides WebP support.
- This plugin allows the Gimp to open and save images compressed using the WebP image format.
+Depends: ${shlibs:Depends}, ${misc:Depends}, gimp
+Description: GIMP plug-in for reading and writing ROM images and tile files
+ Reads, writes and converts console ROM images and tile files, which is
+ useful for emulation ROM modding, hacks and extracting/inserting artwork.
+ .
+ Supports NES 1bpp/2bpp, SNES 2bpp/3bpp/4bpp/8bpp, GameBoy 2bpp, NGPC 2bpp,
+ GBA 4bpp/8bpp, Game Gear/SMS/WSC 4bpp, Mega Drive 4bpp and Casio Loopy
+ 4bpp/8bpp.
+ .
+ This package builds against GIMP 3.x.
